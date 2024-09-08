@@ -1,11 +1,15 @@
 use iced::widget::{button, column, text};
-use iced::{Alignment, Element, Sandbox, Settings};
+use iced::{Alignment, Element, Sandbox, Settings, Size};
 
 pub fn main() -> iced::Result {
-    Counter::run(Settings::default())
+    let mut setting = Settings::default();
+
+    setting.window.size = Size::new(300.0, 600.0);
+
+    Player::run(setting)
 }
 
-struct Counter {
+struct Player {
     value: i32,
 }
 
@@ -15,7 +19,7 @@ enum Message {
     DecrementPressed,
 }
 
-impl Sandbox for Counter {
+impl Sandbox for Player {
     type Message = Message;
 
     fn new() -> Self {
