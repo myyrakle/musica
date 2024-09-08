@@ -27,7 +27,7 @@ impl Sandbox for Player {
     }
 
     fn title(&self) -> String {
-        String::from("Counter - Iced")
+        String::from("musica")
     }
 
     fn update(&mut self, message: Message) {
