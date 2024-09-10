@@ -1,7 +1,12 @@
+mod config;
+
 use iced::widget::{self, button, column, container, text, Column};
 use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
 
 pub fn main() -> iced::Result {
+    let app_data_path = config::get_app_data_path();
+    println!("{:?}", app_data_path);
+
     let mut setting = Settings::default();
 
     setting.window.size = Size::new(300.0, 600.0);
