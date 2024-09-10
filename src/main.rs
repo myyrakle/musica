@@ -1,5 +1,5 @@
 use iced::widget::{self, button, column, container, text, Column};
-use iced::{alignment, Alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
+use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
 
 pub fn main() -> iced::Result {
     let mut setting = Settings::default();
@@ -12,13 +12,12 @@ pub fn main() -> iced::Result {
 #[derive(Debug, Clone, Default)]
 pub struct Music {
     title: String,
-    file_path: String,
+    pub file_path: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct MusicList {
     list: Vec<Music>,
-    size: i32,
 }
 
 impl Default for MusicList {
@@ -102,7 +101,6 @@ impl Default for MusicList {
                     file_path: "test".into(),
                 },
             ],
-            size: 20,
         }
     }
 }
@@ -111,6 +109,7 @@ pub struct Player {
     title: String,
     value: i32,
     music_list: MusicList,
+    on_play: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -128,6 +127,7 @@ impl Sandbox for Player {
             title: "test name".into(),
             value: 0,
             music_list: MusicList::default(),
+            on_play: false,
         }
     }
 
@@ -142,7 +142,7 @@ impl Sandbox for Player {
     fn update(&mut self, message: PlayerMessage) {
         match message {
             PlayerMessage::ResumeOrPausePressed => {
-                self.value += 1;
+                self.on_play = !self.on_play;
             }
             PlayerMessage::NextPressed => {
                 self.value += 1;
@@ -222,12 +222,15 @@ impl Player {
             .width(Length::Fixed(50_f32))
             .height(Length::Fixed(50_f32));
 
-        let resume_or_pause_button =
-            button(text("||").horizontal_alignment(alignment::Horizontal::Center))
-                .on_press(PlayerMessage::ResumeOrPausePressed)
-                .padding(10)
-                .width(Length::Fixed(50_f32))
-                .height(Length::Fixed(50_f32));
+        let resume_or_pause_button_text = if self.on_play { "||" } else { "♪" };
+
+        let resume_or_pause_button = button(
+            text(resume_or_pause_button_text).horizontal_alignment(alignment::Horizontal::Center),
+        )
+        .on_press(PlayerMessage::ResumeOrPausePressed)
+        .padding(10)
+        .width(Length::Fixed(50_f32))
+        .height(Length::Fixed(50_f32));
 
         widget::row!(prev_button, resume_or_pause_button, next_button,)
             .spacing(10)
