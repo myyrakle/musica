@@ -1,5 +1,5 @@
 use iced::widget::{self, button, column, container, text, Column};
-use iced::{alignment, Alignment, Element, Length, Sandbox, Settings, Size};
+use iced::{alignment, Alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
 
 pub fn main() -> iced::Result {
     let mut setting = Settings::default();
@@ -156,17 +156,31 @@ impl Sandbox for Player {
     fn view(&self) -> Element<PlayerMessage> {
         container(
             column!(
-                container(column!(
-                    container(text(self.title.as_str()).size(20))
-                        .padding(20)
-                        .align_x(alignment::Horizontal::Center)
-                        .width(Length::Fill),
-                    container(self.button_view())
-                        .align_x(alignment::Horizontal::Center)
-                        .width(Length::Fill),
-                ))
+                container(
+                    container(column!(
+                        container(text(self.title.as_str()).size(15))
+                            .padding(20)
+                            .align_x(alignment::Horizontal::Center)
+                            .width(Length::Fill),
+                        container(self.button_view())
+                            .align_x(alignment::Horizontal::Center)
+                            .width(Length::Fill),
+                    ),)
+                    .style(|_: &Theme| {
+                        let mut style = container::Appearance::default();
+                        style.background =
+                            Some(iced::Background::Color(Color::from_rgb8(0x44, 0x47, 0x5a)));
+                        style.text_color = Some(Color::BLACK);
+                        style.border.width = 1.0;
+                        style.border.radius = 10.0.into();
+
+                        style
+                    })
+                    .padding(10),
+                )
                 .width(Length::Fill)
-                .height(Length::Fixed(110_f32)),
+                .height(Length::Fixed(150_f32))
+                .padding(10),
                 container(self.items_list_view())
                     .height(Length::Fill)
                     .padding(10),
