@@ -159,10 +159,11 @@ impl Sandbox for Player {
                 container(
                     container(column!(
                         container(text(self.title.as_str()).size(15))
-                            .padding(20)
+                            .padding(15)
                             .align_x(alignment::Horizontal::Center)
                             .width(Length::Fill),
                         container(self.button_view())
+                            .padding(5)
                             .align_x(alignment::Horizontal::Center)
                             .width(Length::Fill),
                     ),)
