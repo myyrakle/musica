@@ -211,22 +211,32 @@ impl Player {
     }
 
     fn button_view(&self) -> Element<'static, PlayerMessage> {
-        let prev_button = button(text("<").horizontal_alignment(alignment::Horizontal::Center))
-            .on_press(PlayerMessage::PreviousPressed)
-            .padding(10)
-            .width(Length::Fixed(50_f32))
-            .height(Length::Fixed(50_f32));
+        let prev_button = button(
+            text("<")
+                .horizontal_alignment(alignment::Horizontal::Center)
+                .vertical_alignment(alignment::Vertical::Center),
+        )
+        .on_press(PlayerMessage::PreviousPressed)
+        .padding(10)
+        .width(Length::Fixed(50_f32))
+        .height(Length::Fixed(50_f32));
 
-        let next_button = button(text(">").horizontal_alignment(alignment::Horizontal::Center))
-            .on_press(PlayerMessage::NextPressed)
-            .padding(10)
-            .width(Length::Fixed(50_f32))
-            .height(Length::Fixed(50_f32));
+        let next_button = button(
+            text(">")
+                .horizontal_alignment(alignment::Horizontal::Center)
+                .vertical_alignment(alignment::Vertical::Center),
+        )
+        .on_press(PlayerMessage::NextPressed)
+        .padding(10)
+        .width(Length::Fixed(50_f32))
+        .height(Length::Fixed(50_f32));
 
-        let resume_or_pause_button_text = if self.on_play { "||" } else { "♪" };
+        let resume_or_pause_button_text = if self.on_play { "||" } else { ">>" };
 
         let resume_or_pause_button = button(
-            text(resume_or_pause_button_text).horizontal_alignment(alignment::Horizontal::Center),
+            text(resume_or_pause_button_text)
+                .horizontal_alignment(alignment::Horizontal::Center)
+                .vertical_alignment(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::ResumeOrPausePressed)
         .padding(10)
