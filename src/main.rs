@@ -115,7 +115,7 @@ pub struct Player {
 
 #[derive(Debug, Clone, Copy)]
 pub enum PlayerMessage {
-    ResuneOrPausePressed,
+    ResumeOrPausePressed,
     NextPressed,
     PreviousPressed,
 }
@@ -141,7 +141,7 @@ impl Sandbox for Player {
 
     fn update(&mut self, message: PlayerMessage) {
         match message {
-            PlayerMessage::ResuneOrPausePressed => {
+            PlayerMessage::ResumeOrPausePressed => {
                 self.value += 1;
             }
             PlayerMessage::NextPressed => {
@@ -157,14 +157,16 @@ impl Sandbox for Player {
         container(
             column!(
                 container(column!(
-                    container(text(self.title.as_str()).size(20)).padding(20),
-                    container(widget::row!(
-                        button("<").on_press(PlayerMessage::PreviousPressed),
-                        button("||").on_press(PlayerMessage::ResuneOrPausePressed),
-                        button(">").on_press(PlayerMessage::NextPressed),
-                    )),
+                    container(text(self.title.as_str()).size(20))
+                        .padding(20)
+                        .align_x(alignment::Horizontal::Center)
+                        .width(Length::Fill),
+                    container(self.button_view())
+                        .align_x(alignment::Horizontal::Center)
+                        .width(Length::Fill),
                 ))
-                .height(Length::Fixed(100_f32)),
+                .width(Length::Fill)
+                .height(Length::Fixed(110_f32)),
                 container(self.items_list_view())
                     .height(Length::Fill)
                     .padding(10),
@@ -191,5 +193,30 @@ impl Player {
         }
 
         widget::scrollable(container(column)).width(300).into()
+    }
+
+    fn button_view(&self) -> Element<'static, PlayerMessage> {
+        let prev_button = button(text("<").horizontal_alignment(alignment::Horizontal::Center))
+            .on_press(PlayerMessage::PreviousPressed)
+            .padding(10)
+            .width(Length::Fixed(50_f32))
+            .height(Length::Fixed(50_f32));
+
+        let next_button = button(text(">").horizontal_alignment(alignment::Horizontal::Center))
+            .on_press(PlayerMessage::NextPressed)
+            .padding(10)
+            .width(Length::Fixed(50_f32))
+            .height(Length::Fixed(50_f32));
+
+        let resume_or_pause_button =
+            button(text("||").horizontal_alignment(alignment::Horizontal::Center))
+                .on_press(PlayerMessage::ResumeOrPausePressed)
+                .padding(10)
+                .width(Length::Fixed(50_f32))
+                .height(Length::Fixed(50_f32));
+
+        widget::row!(prev_button, resume_or_pause_button, next_button,)
+            .spacing(10)
+            .into()
     }
 }
