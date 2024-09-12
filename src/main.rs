@@ -7,7 +7,9 @@ use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
 
 pub fn main() -> iced::Result {
     let app_data_path = config::get_app_data_path();
-    println!("{:?}", app_data_path);
+    let config_path = app_data_path.join("config.json");
+
+    config::create_config_if_not_exists(config_path).unwrap();
 
     let mut setting = Settings::default();
 

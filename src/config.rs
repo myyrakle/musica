@@ -2,6 +2,11 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct Config {
+    pub directory_path: PathBuf, // 재생할 기본 경로
+}
+
 pub fn get_app_data_path() -> PathBuf {
     let home_dir = env::var("HOME").unwrap_or_else(|_| String::from(""));
 
@@ -20,4 +25,20 @@ pub fn get_app_data_path() -> PathBuf {
     }
 
     app_data_path
+}
+
+pub fn create_config_if_not_exists(path: PathBuf) -> anyhow::Result<()> {
+    if !path.exists() {
+        let config = Config {
+            directory_path: env::current_dir()?,
+        };
+
+        let config_str = serde_json::to_string(&config)?;
+
+        fs::write(path, config_str)?;
+
+        Ok(())
+    } else {
+        Ok(())
+    }
 }
