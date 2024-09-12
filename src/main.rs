@@ -1,4 +1,5 @@
 mod config;
+mod file;
 mod static_assets;
 
 use iced::widget::{self, button, column, container, text, Column};
