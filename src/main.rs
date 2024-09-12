@@ -9,6 +9,7 @@ pub fn main() -> iced::Result {
 
     let mut setting = Settings::default();
 
+    setting.window.resizable = false;
     setting.window.size = Size::new(300.0, 600.0);
 
     Player::run(setting)
