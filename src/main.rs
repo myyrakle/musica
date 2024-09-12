@@ -1,4 +1,5 @@
 mod config;
+mod static_assets;
 
 use iced::widget::{self, button, column, container, text, Column};
 use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
