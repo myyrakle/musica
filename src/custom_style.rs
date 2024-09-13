@@ -1,10 +1,10 @@
 use iced::{widget::button, Theme};
 
-pub struct CustomButtonStyle {
+pub struct SettingButtonStyle {
     pub color: iced::Color,
 }
 
-impl button::StyleSheet for CustomButtonStyle {
+impl button::StyleSheet for SettingButtonStyle {
     type Style = Theme;
 
     fn active(&self, _: &Self::Style) -> button::Appearance {

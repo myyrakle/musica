@@ -1,11 +1,11 @@
 mod config;
-mod custom;
+mod custom_style;
 mod file;
 mod static_assets;
 
 use std::borrow::{Borrow, BorrowMut};
 
-use custom::CustomButtonStyle;
+use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, Column};
 use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
 
@@ -217,7 +217,7 @@ impl Sandbox for Player {
 
 impl Player {
     fn setting_button(&self) -> Element<'static, PlayerMessage> {
-        let style_sheet = CustomButtonStyle {
+        let style_sheet = SettingButtonStyle {
             color: Color::from_rgba8(0xff, 0xff, 0xff, 0.5),
         };
         let button_style = iced::theme::Button::custom(style_sheet);
