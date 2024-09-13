@@ -1,7 +1,11 @@
 mod config;
+mod custom;
 mod file;
 mod static_assets;
 
+use std::borrow::{Borrow, BorrowMut};
+
+use custom::CustomButtonStyle;
 use iced::widget::{self, button, column, container, text, Column};
 use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
 
@@ -168,8 +172,9 @@ impl Sandbox for Player {
             column!(
                 container(
                     container(column!(
+                        container(self.setting_button()).padding(0),
                         container(text(self.title.as_str()).size(15))
-                            .padding(15)
+                            .padding(10)
                             .align_x(alignment::Horizontal::Center)
                             .width(Length::Fill),
                         container(self.button_view())
@@ -190,7 +195,7 @@ impl Sandbox for Player {
                     .padding(10),
                 )
                 .width(Length::Fill)
-                .height(Length::Fixed(150_f32))
+                .height(Length::Fixed(160_f32))
                 .padding(10),
                 container(self.items_list_view())
                     .height(Length::Fill)
@@ -207,6 +212,25 @@ impl Sandbox for Player {
 }
 
 impl Player {
+    fn setting_button(&self) -> Element<'static, PlayerMessage> {
+        let style_sheet = CustomButtonStyle {
+            color: Color::from_rgba8(0xff, 0xff, 0xff, 0.5),
+        };
+        let button_style = iced::theme::Button::custom(style_sheet);
+
+        let setting_button = button(
+            text("setting")
+                .size(12)
+                .horizontal_alignment(alignment::Horizontal::Right)
+                .vertical_alignment(alignment::Vertical::Center),
+        )
+        .on_press(PlayerMessage::ResumeOrPausePressed)
+        .padding(3)
+        .style(button_style);
+
+        setting_button.into()
+    }
+
     fn items_list_view(&self) -> Element<'static, PlayerMessage> {
         let mut column = Column::new()
             .spacing(10)
