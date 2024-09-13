@@ -131,6 +131,7 @@ pub enum PlayerMessage {
     ResumeOrPausePressed,
     NextPressed,
     PreviousPressed,
+    SettingButtonPressed,
 }
 
 impl Sandbox for Player {
@@ -163,6 +164,9 @@ impl Sandbox for Player {
             }
             PlayerMessage::PreviousPressed => {
                 self.value -= 1;
+            }
+            PlayerMessage::SettingButtonPressed => {
+                println!("setting button pressed");
             }
         }
     }
@@ -224,7 +228,7 @@ impl Player {
                 .horizontal_alignment(alignment::Horizontal::Right)
                 .vertical_alignment(alignment::Vertical::Center),
         )
-        .on_press(PlayerMessage::ResumeOrPausePressed)
+        .on_press(PlayerMessage::SettingButtonPressed)
         .padding(3)
         .style(button_style);
 
