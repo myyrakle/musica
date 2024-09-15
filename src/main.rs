@@ -6,7 +6,7 @@ mod modal;
 mod state;
 mod static_assets;
 
-use config::read_config_if_exists;
+use config::{read_config_if_exists, Config};
 use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, Column};
 use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};
@@ -14,9 +14,7 @@ use modal::Modal;
 use state::{MainState, MusicList};
 
 pub fn main() -> iced::Result {
-    let app_data_path = config::get_app_data_path();
-    let config_path = app_data_path.join("config.json");
-
+    let config_path = config::get_config_path();
     config::create_config_if_not_exists(config_path).unwrap();
 
     let mut setting = Settings::default();
@@ -29,6 +27,7 @@ pub fn main() -> iced::Result {
 
 pub struct Player {
     main_state: MainState,
+    config_data: Config,
     show_setting_modal: bool,
 }
 
@@ -45,6 +44,9 @@ impl Sandbox for Player {
     type Message = PlayerMessage;
 
     fn new() -> Self {
+        let config_path = config::get_config_path();
+        let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
+
         Self {
             main_state: MainState {
                 title: "test name".into(),
@@ -52,6 +54,7 @@ impl Sandbox for Player {
                 music_list: MusicList::default(),
                 on_play: false,
             },
+            config_data,
             show_setting_modal: false,
         }
     }

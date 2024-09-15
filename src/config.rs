@@ -7,7 +7,7 @@ pub struct Config {
     pub directory_path: PathBuf, // 재생할 기본 경로
 }
 
-pub fn get_app_data_path() -> PathBuf {
+fn get_app_data_path() -> PathBuf {
     let home_dir = env::var("HOME").unwrap_or_else(|_| String::from(""));
 
     #[cfg(target_os = "windows")]
@@ -25,6 +25,12 @@ pub fn get_app_data_path() -> PathBuf {
     }
 
     app_data_path
+}
+
+pub fn get_config_path() -> PathBuf {
+    let app_data_path = get_app_data_path();
+
+    app_data_path.join("config.json")
 }
 
 pub fn create_config_if_not_exists(path: PathBuf) -> anyhow::Result<()> {
