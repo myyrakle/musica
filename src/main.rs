@@ -2,6 +2,7 @@ mod config;
 mod custom_style;
 mod dialog;
 mod file;
+mod modal;
 mod static_assets;
 
 use std::borrow::{Borrow, BorrowMut};
