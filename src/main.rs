@@ -7,7 +7,8 @@ mod static_assets;
 
 use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, Column};
-use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
+use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};
+use modal::Modal;
 
 pub fn main() -> iced::Result {
     let app_data_path = config::get_app_data_path();
@@ -169,10 +170,10 @@ impl Sandbox for Player {
                 self.value -= 1;
             }
             PlayerMessage::OpenSettingModal => {
-                println!("setting button pressed");
+                self.show_setting_modal = true;
             }
             PlayerMessage::CloseSettingModal => {
-                println!("setting modal closed");
+                self.show_setting_modal = false;
             }
         }
     }
@@ -219,7 +220,25 @@ impl Sandbox for Player {
         .align_y(alignment::Vertical::Top)
         .into();
 
-        content
+        if self.show_setting_modal {
+            let modal = container(
+                column![
+                    text("Sign Up").size(24),
+                    column![button(text("Submit")).on_press(PlayerMessage::CloseSettingModal),]
+                        .spacing(10)
+                ]
+                .spacing(20),
+            )
+            .width(300)
+            .padding(10)
+            .style(theme::Container::Box);
+
+            Modal::new(content, modal)
+                .on_blur(PlayerMessage::CloseSettingModal)
+                .into()
+        } else {
+            content
+        }
     }
 }
 
