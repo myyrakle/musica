@@ -1,17 +1,18 @@
+use std::path::PathBuf;
+
 use native_dialog::FileDialog;
 
-pub fn open_setting_dialog() {
-    let path = FileDialog::new()
-        .set_location("~/Desktop")
-        .add_filter("PNG Image", &["png"])
-        .add_filter("JPEG Image", &["jpg", "jpeg"])
-        .show_open_single_file()
-        .unwrap();
+pub fn open_directory_dialog() -> anyhow::Result<PathBuf> {
+    let path = FileDialog::new().show_open_single_dir()?;
 
     let path = match path {
         Some(path) => path,
-        None => return,
+        None => {
+            return Err(anyhow::anyhow!("No directory selected"));
+        }
     };
 
     println!("Selected file: {:?}", path);
+
+    Ok(path)
 }

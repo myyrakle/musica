@@ -1,6 +1,5 @@
 pub struct MainState {
     pub title: String,
-    pub value: i32,
     pub music_list: MusicList,
     pub on_play: bool,
 }

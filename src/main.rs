@@ -14,6 +14,12 @@ use modal::Modal;
 use state::{MainState, MusicList};
 
 pub fn main() -> iced::Result {
+    let path = dialog::open_directory_dialog();
+
+    if let Ok(path) = path {
+        println!("Selected file: {:?}", path);
+    }
+
     let config_path = config::get_config_path();
     config::create_config_if_not_exists(config_path).unwrap();
 
@@ -36,8 +42,10 @@ pub enum PlayerMessage {
     ResumeOrPausePressed,
     NextPressed,
     PreviousPressed,
+
     OpenSettingModal,
     CloseSettingModal,
+    AskMusicDirectory,
 }
 
 impl Sandbox for Player {
@@ -50,7 +58,6 @@ impl Sandbox for Player {
         Self {
             main_state: MainState {
                 title: "test name".into(),
-                value: 0,
                 music_list: MusicList::default(),
                 on_play: false,
             },
@@ -72,17 +79,20 @@ impl Sandbox for Player {
             PlayerMessage::ResumeOrPausePressed => {
                 self.main_state.on_play = !self.main_state.on_play;
             }
-            PlayerMessage::NextPressed => {
-                self.main_state.value += 1;
-            }
-            PlayerMessage::PreviousPressed => {
-                self.main_state.value -= 1;
-            }
+            PlayerMessage::NextPressed => {}
+            PlayerMessage::PreviousPressed => {}
             PlayerMessage::OpenSettingModal => {
                 self.show_setting_modal = true;
             }
             PlayerMessage::CloseSettingModal => {
                 self.show_setting_modal = false;
+            }
+            PlayerMessage::AskMusicDirectory => {
+                let path = dialog::open_directory_dialog();
+
+                if let Ok(path) = path {
+                    self.config_data.directory_path = path;
+                }
             }
         }
     }
@@ -130,17 +140,7 @@ impl Sandbox for Player {
         .into();
 
         if self.show_setting_modal {
-            let modal = container(
-                column![
-                    text("Sign Up").size(24),
-                    column![button(text("Submit")).on_press(PlayerMessage::CloseSettingModal),]
-                        .spacing(10)
-                ]
-                .spacing(20),
-            )
-            .width(300)
-            .padding(10)
-            .style(theme::Container::Box);
+            let modal = self.setting_modal_view();
 
             Modal::new(content, modal)
                 .on_blur(PlayerMessage::CloseSettingModal)
@@ -220,5 +220,24 @@ impl Player {
         widget::row!(prev_button, resume_or_pause_button, next_button,)
             .spacing(10)
             .into()
+    }
+}
+
+impl Player {
+    fn setting_modal_view(&self) -> Element<'_, PlayerMessage> {
+        let content = container(
+            column![
+                text("Setting").size(24),
+                column![button(text("Select Music Directory"))
+                    .on_press(PlayerMessage::AskMusicDirectory)]
+                .spacing(10)
+            ]
+            .spacing(20),
+        )
+        .width(250)
+        .padding(10)
+        .style(theme::Container::Box);
+
+        content.into()
     }
 }
