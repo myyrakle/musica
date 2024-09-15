@@ -1,5 +1,6 @@
 mod config;
 mod custom_style;
+mod dialog;
 mod file;
 mod static_assets;
 
