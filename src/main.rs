@@ -1,14 +1,26 @@
 mod config;
+mod custom_style;
+mod dialog;
 mod file;
+mod modal;
+mod state;
 mod static_assets;
 
+use config::{read_config_if_exists, Config};
+use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, Column};
-use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
+use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};
+use modal::Modal;
+use state::{MainState, MusicList};
 
 pub fn main() -> iced::Result {
-    let app_data_path = config::get_app_data_path();
-    let config_path = app_data_path.join("config.json");
+    let path = dialog::open_directory_dialog();
 
+    if let Ok(path) = path {
+        println!("Selected file: {:?}", path);
+    }
+
+    let config_path = config::get_config_path();
     config::create_config_if_not_exists(config_path).unwrap();
 
     let mut setting = Settings::default();
@@ -19,107 +31,10 @@ pub fn main() -> iced::Result {
     Player::run(setting)
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct Music {
-    title: String,
-    pub file_path: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct MusicList {
-    list: Vec<Music>,
-}
-
-impl Default for MusicList {
-    fn default() -> Self {
-        Self {
-            list: vec![
-                Music {
-                    title: "test1".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test2".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test3".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test4".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test5".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test6".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test7".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test8".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test9".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test10".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test11".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test12".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test13".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test14".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test10".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test11".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test12".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test13".into(),
-                    file_path: "test".into(),
-                },
-                Music {
-                    title: "test14".into(),
-                    file_path: "test".into(),
-                },
-            ],
-        }
-    }
-}
-
 pub struct Player {
-    title: String,
-    value: i32,
-    music_list: MusicList,
-    on_play: bool,
+    main_state: MainState,
+    config_data: Config,
+    show_setting_modal: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -127,17 +42,27 @@ pub enum PlayerMessage {
     ResumeOrPausePressed,
     NextPressed,
     PreviousPressed,
+
+    OpenSettingModal,
+    CloseSettingModal,
+    AskMusicDirectory,
 }
 
 impl Sandbox for Player {
     type Message = PlayerMessage;
 
     fn new() -> Self {
+        let config_path = config::get_config_path();
+        let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
+
         Self {
-            title: "test name".into(),
-            value: 0,
-            music_list: MusicList::default(),
-            on_play: false,
+            main_state: MainState {
+                title: "test name".into(),
+                music_list: MusicList::default(),
+                on_play: false,
+            },
+            config_data,
+            show_setting_modal: false,
         }
     }
 
@@ -152,24 +77,34 @@ impl Sandbox for Player {
     fn update(&mut self, message: PlayerMessage) {
         match message {
             PlayerMessage::ResumeOrPausePressed => {
-                self.on_play = !self.on_play;
+                self.main_state.on_play = !self.main_state.on_play;
             }
-            PlayerMessage::NextPressed => {
-                self.value += 1;
+            PlayerMessage::NextPressed => {}
+            PlayerMessage::PreviousPressed => {}
+            PlayerMessage::OpenSettingModal => {
+                self.show_setting_modal = true;
             }
-            PlayerMessage::PreviousPressed => {
-                self.value -= 1;
+            PlayerMessage::CloseSettingModal => {
+                self.show_setting_modal = false;
+            }
+            PlayerMessage::AskMusicDirectory => {
+                let path = dialog::open_directory_dialog();
+
+                if let Ok(path) = path {
+                    self.config_data.directory_path = path;
+                }
             }
         }
     }
 
     fn view(&self) -> Element<PlayerMessage> {
-        container(
+        let content = container(
             column!(
                 container(
                     container(column!(
-                        container(text(self.title.as_str()).size(15))
-                            .padding(15)
+                        container(self.setting_button()).padding(0),
+                        container(text(self.main_state.title.as_str()).size(15))
+                            .padding(10)
                             .align_x(alignment::Horizontal::Center)
                             .width(Length::Fill),
                         container(self.button_view())
@@ -190,7 +125,7 @@ impl Sandbox for Player {
                     .padding(10),
                 )
                 .width(Length::Fill)
-                .height(Length::Fixed(150_f32))
+                .height(Length::Fixed(160_f32))
                 .padding(10),
                 container(self.items_list_view())
                     .height(Length::Fill)
@@ -202,18 +137,47 @@ impl Sandbox for Player {
         .width(Length::Fill)
         .align_x(alignment::Horizontal::Center)
         .align_y(alignment::Vertical::Top)
-        .into()
+        .into();
+
+        if self.show_setting_modal {
+            let modal = self.setting_modal_view();
+
+            Modal::new(content, modal)
+                .on_blur(PlayerMessage::CloseSettingModal)
+                .into()
+        } else {
+            content
+        }
     }
 }
 
 impl Player {
+    fn setting_button(&self) -> Element<'static, PlayerMessage> {
+        let style_sheet = SettingButtonStyle {
+            color: Color::from_rgba8(0xff, 0xff, 0xff, 0.5),
+        };
+        let button_style = iced::theme::Button::custom(style_sheet);
+
+        let setting_button = button(
+            text("setting")
+                .size(12)
+                .horizontal_alignment(alignment::Horizontal::Right)
+                .vertical_alignment(alignment::Vertical::Center),
+        )
+        .on_press(PlayerMessage::OpenSettingModal)
+        .padding(3)
+        .style(button_style);
+
+        setting_button.into()
+    }
+
     fn items_list_view(&self) -> Element<'static, PlayerMessage> {
         let mut column = Column::new()
             .spacing(10)
             .align_items(iced::Alignment::Center)
             .width(Length::Fill);
 
-        for value in self.music_list.list.iter() {
+        for value in self.main_state.music_list.list.iter() {
             column = column.push(text(value.title.as_str()));
         }
 
@@ -241,7 +205,7 @@ impl Player {
         .width(Length::Fixed(50_f32))
         .height(Length::Fixed(50_f32));
 
-        let resume_or_pause_button_text = if self.on_play { "||" } else { ">>" };
+        let resume_or_pause_button_text = if self.main_state.on_play { "||" } else { ">>" };
 
         let resume_or_pause_button = button(
             text(resume_or_pause_button_text)
@@ -256,5 +220,24 @@ impl Player {
         widget::row!(prev_button, resume_or_pause_button, next_button,)
             .spacing(10)
             .into()
+    }
+}
+
+impl Player {
+    fn setting_modal_view(&self) -> Element<'_, PlayerMessage> {
+        let content = container(
+            column![
+                text("Setting").size(24),
+                column![button(text("Select Music Directory"))
+                    .on_press(PlayerMessage::AskMusicDirectory)]
+                .spacing(10)
+            ]
+            .spacing(20),
+        )
+        .width(250)
+        .padding(10)
+        .style(theme::Container::Box);
+
+        content.into()
     }
 }
