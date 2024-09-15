@@ -5,8 +5,6 @@ mod file;
 mod modal;
 mod static_assets;
 
-use std::borrow::{Borrow, BorrowMut};
-
 use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, Column};
 use iced::{alignment, Color, Element, Length, Sandbox, Settings, Size, Theme};
@@ -133,7 +131,8 @@ pub enum PlayerMessage {
     ResumeOrPausePressed,
     NextPressed,
     PreviousPressed,
-    SettingButtonPressed,
+    OpenSettingModal,
+    CloseSettingModal,
 }
 
 impl Sandbox for Player {
@@ -167,8 +166,11 @@ impl Sandbox for Player {
             PlayerMessage::PreviousPressed => {
                 self.value -= 1;
             }
-            PlayerMessage::SettingButtonPressed => {
+            PlayerMessage::OpenSettingModal => {
                 println!("setting button pressed");
+            }
+            PlayerMessage::CloseSettingModal => {
+                println!("setting modal closed");
             }
         }
     }
@@ -230,7 +232,7 @@ impl Player {
                 .horizontal_alignment(alignment::Horizontal::Right)
                 .vertical_alignment(alignment::Vertical::Center),
         )
-        .on_press(PlayerMessage::SettingButtonPressed)
+        .on_press(PlayerMessage::OpenSettingModal)
         .padding(3)
         .style(button_style);
 
