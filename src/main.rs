@@ -124,6 +124,7 @@ pub struct Player {
     value: i32,
     music_list: MusicList,
     on_play: bool,
+    show_setting_modal: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -144,6 +145,7 @@ impl Sandbox for Player {
             value: 0,
             music_list: MusicList::default(),
             on_play: false,
+            show_setting_modal: false,
         }
     }
 
@@ -176,7 +178,7 @@ impl Sandbox for Player {
     }
 
     fn view(&self) -> Element<PlayerMessage> {
-        container(
+        let content = container(
             column!(
                 container(
                     container(column!(
@@ -215,7 +217,9 @@ impl Sandbox for Player {
         .width(Length::Fill)
         .align_x(alignment::Horizontal::Center)
         .align_y(alignment::Vertical::Top)
-        .into()
+        .into();
+
+        content
     }
 }
 
