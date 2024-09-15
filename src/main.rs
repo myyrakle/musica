@@ -6,6 +6,7 @@ mod modal;
 mod state;
 mod static_assets;
 
+use config::read_config_if_exists;
 use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, Column};
 use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};

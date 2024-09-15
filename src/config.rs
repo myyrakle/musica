@@ -42,3 +42,11 @@ pub fn create_config_if_not_exists(path: PathBuf) -> anyhow::Result<()> {
         Ok(())
     }
 }
+
+pub fn read_config_if_exists(path: PathBuf) -> anyhow::Result<Config> {
+    let config_str = fs::read_to_string(path)?;
+
+    let config: Config = serde_json::from_str(&config_str)?;
+
+    Ok(config)
+}
