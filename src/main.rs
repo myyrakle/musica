@@ -11,7 +11,6 @@ use std::u8;
 use config::Config;
 use iced::widget::{self, button, column, container, text, text_input, Column};
 use iced::{alignment, Color, Element, Length, Settings, Size, Theme};
-use modal::Modal;
 use state::{MainState, Music, MusicList};
 
 static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
@@ -66,10 +65,6 @@ impl Player {
         app.update_music_list_from_config();
 
         app
-    }
-
-    fn title(&self) -> String {
-        String::from("")
     }
 
     fn theme(&self) -> iced::Theme {
@@ -154,11 +149,9 @@ impl Player {
         .into();
 
         if self.show_setting_modal {
-            let modal = self.setting_modal_view();
+            let modal_view = self.setting_modal_view();
 
-            Modal::new(content, modal)
-                .on_blur(PlayerMessage::CloseSettingModal)
-                .into()
+            modal::create_modal(content, modal_view, PlayerMessage::CloseSettingModal)
         } else {
             content
         }
