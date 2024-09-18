@@ -176,7 +176,9 @@ impl Player {
         .padding(3)
         .style(|_, _| {
             let mut style = iced::widget::button::Style::default();
-            style.text_color = Color::from_rgba8(0xff, 0xff, 0xff, 0.5);
+            style.background = Some(iced::Background::Color(Color::from_rgba8(
+                0xff, 0xff, 0xff, 0.5,
+            )));
             style.border.radius = 10.0.into();
             style
         });
