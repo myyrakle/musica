@@ -7,6 +7,7 @@ mod state;
 mod static_assets;
 
 use std::sync::LazyLock;
+use std::u8;
 
 use config::{read_config_if_exists, Config};
 use custom_style::SettingButtonStyle;
@@ -234,18 +235,30 @@ impl Player {
 
 impl Player {
     fn setting_modal_view(&self) -> Element<'_, PlayerMessage> {
-        let directory_text_input = text_input(
-            "Music Directory Path",
-            self.config_data
-                .directory_path
-                .as_os_str()
-                .to_str()
-                .unwrap_or_default(),
-        )
-        .id(TEXT_INPUT_ID.clone())
-        .on_input(PlayerMessage::MusicDirectoryInputChanged)
-        .padding(15)
-        .size(13);
+        let directory_path = self.config_data.directory_path.clone();
+        let directory_path_text = directory_path.as_os_str().to_str().unwrap_or_default();
+
+        let directory_text_input = text_input("Music Directory Path", directory_path_text)
+            .id(TEXT_INPUT_ID.clone())
+            .on_input(PlayerMessage::MusicDirectoryInputChanged)
+            .padding(15)
+            .size(13);
+
+        let directory_error_messasge = if directory_path_text != "" {
+            if !directory_path.exists() {
+                "path is not exists"
+            } else if !directory_path.is_dir() {
+                "path is not directory"
+            } else {
+                ""
+            }
+        } else {
+            ""
+        };
+
+        let directory_error_text = text(directory_error_messasge)
+            .style(Color::from_rgb8(u8::MAX, 0, 0))
+            .size(9);
 
         let choose_directory_button =
             button(text("Choose Directory").size(12)).on_press(PlayerMessage::AskMusicDirectory);
@@ -253,7 +266,12 @@ impl Player {
         let content = container(
             column![
                 text("Setting").size(24),
-                column![directory_text_input, choose_directory_button,].spacing(10)
+                column![
+                    directory_text_input,
+                    directory_error_text,
+                    choose_directory_button,
+                ]
+                .spacing(2)
             ]
             .spacing(20),
         )
