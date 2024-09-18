@@ -247,15 +247,13 @@ impl Player {
         .padding(15)
         .size(13);
 
+        let choose_directory_button =
+            button(text("Choose Directory").size(12)).on_press(PlayerMessage::AskMusicDirectory);
+
         let content = container(
             column![
                 text("Setting").size(24),
-                column![
-                    directory_text_input,
-                    button(text("Choose Music Directory"))
-                        .on_press(PlayerMessage::AskMusicDirectory),
-                ]
-                .spacing(10)
+                column![directory_text_input, choose_directory_button,].spacing(10)
             ]
             .spacing(20),
         )
