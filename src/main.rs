@@ -1,5 +1,4 @@
 mod config;
-mod custom_style;
 mod dialog;
 mod file;
 mod modal;
@@ -10,9 +9,8 @@ use std::sync::LazyLock;
 use std::u8;
 
 use config::Config;
-use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, text_input, Column};
-use iced::{alignment, theme, Color, Element, Length, Settings, Size, Theme};
+use iced::{alignment, Color, Element, Length, Settings, Size, Theme};
 use modal::Modal;
 use state::{MainState, Music, MusicList};
 
@@ -130,7 +128,7 @@ impl Player {
                             .width(Length::Fill),
                     ),)
                     .style(|_: &Theme| {
-                        let mut style = container::Appearance::default();
+                        let mut style = Default::default();
                         style.background =
                             Some(iced::Background::Color(Color::from_rgb8(0x44, 0x47, 0x5a)));
                         style.text_color = Some(Color::BLACK);
@@ -168,13 +166,14 @@ impl Player {
     }
 }
 
+impl Default for Player {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Player {
     fn setting_button(&self) -> Element<'static, PlayerMessage> {
-        let style_sheet = SettingButtonStyle {
-            color: Color::from_rgba8(0xff, 0xff, 0xff, 0.5),
-        };
-        let button_style = iced::theme::Button::custom(style_sheet);
-
         let setting_button = button(
             text("setting")
                 .size(12)
@@ -183,7 +182,12 @@ impl Player {
         )
         .on_press(PlayerMessage::OpenSettingModal)
         .padding(3)
-        .style(button_style);
+        .style(|_, _| {
+            let mut style = iced::widget::button::Style::default();
+            style.text_color = Color::from_rgba8(0xff, 0xff, 0xff, 0.5);
+            style.border.radius = 10.0.into();
+            style
+        });
 
         setting_button.into()
     }
@@ -301,7 +305,7 @@ impl Player {
         )
         .width(250)
         .padding(10)
-        .style(theme::Container::Box);
+        .style(container::rounded_box);
 
         content.into()
     }
