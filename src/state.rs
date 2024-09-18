@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 pub struct MainState {
     pub title: String,
     pub music_list: MusicList,
@@ -7,7 +9,7 @@ pub struct MainState {
 #[derive(Debug, Clone, Default)]
 pub struct Music {
     pub title: String,
-    pub file_path: String,
+    pub file_path: PathBuf,
 }
 
 #[derive(Debug, Clone)]
