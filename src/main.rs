@@ -12,7 +12,7 @@ use std::u8;
 use config::Config;
 use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, text_input, Column};
-use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};
+use iced::{alignment, theme, Color, Element, Length, Settings, Size, Theme};
 use modal::Modal;
 use state::{MainState, Music, MusicList};
 
@@ -27,7 +27,10 @@ pub fn main() -> iced::Result {
     setting.window.resizable = false;
     setting.window.size = Size::new(300.0, 600.0);
 
-    Player::run(setting)
+    iced::application("musica", Player::update, Player::view)
+        .settings(setting)
+        .theme(Player::theme)
+        .run()
 }
 
 pub struct Player {
@@ -48,9 +51,7 @@ pub enum PlayerMessage {
     AskMusicDirectory,
 }
 
-impl Sandbox for Player {
-    type Message = PlayerMessage;
-
+impl Player {
     fn new() -> Self {
         let config_path = config::get_config_path();
         let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
@@ -71,7 +72,7 @@ impl Sandbox for Player {
     }
 
     fn title(&self) -> String {
-        String::from("musica")
+        String::from("")
     }
 
     fn theme(&self) -> iced::Theme {
