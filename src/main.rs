@@ -9,7 +9,7 @@ mod static_assets;
 use std::sync::LazyLock;
 use std::u8;
 
-use config::{read_config_if_exists, Config};
+use config::Config;
 use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, text_input, Column};
 use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};
