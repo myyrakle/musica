@@ -246,6 +246,7 @@ impl Player {
         if let Ok(file_info_list) = file::read_file_list(&music_directory_path) {
             self.main_state.music_list.list = file_info_list
                 .iter()
+                .filter(|x| x.is_music_file())
                 .map(|x| Music {
                     title: x.filename.clone(),
                     file_path: x.filepath.clone(),

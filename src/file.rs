@@ -7,6 +7,13 @@ pub struct FileInfo {
     pub filepath: PathBuf,
 }
 
+impl FileInfo {
+    pub fn is_music_file(&self) -> bool {
+        let ext = self.filepath.extension().unwrap_or_default();
+        ext == "mp3" || ext == "ogg"
+    }
+}
+
 pub fn read_file_list(path: &Path) -> anyhow::Result<Vec<FileInfo>> {
     let read_dir_result = fs::read_dir(path)?;
 
