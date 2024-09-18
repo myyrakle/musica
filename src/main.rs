@@ -1,5 +1,4 @@
 mod config;
-mod custom_style;
 mod dialog;
 mod file;
 mod modal;
@@ -10,10 +9,8 @@ use std::sync::LazyLock;
 use std::u8;
 
 use config::Config;
-use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, text_input, Column};
-use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};
-use modal::Modal;
+use iced::{alignment, Color, Element, Length, Settings, Size, Theme};
 use state::{MainState, Music, MusicList};
 
 static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
@@ -22,12 +19,14 @@ pub fn main() -> iced::Result {
     let config_path = config::get_config_path();
     config::create_config_if_not_exists(config_path).unwrap();
 
-    let mut setting = Settings::default();
+    let setting = Settings::default();
 
-    setting.window.resizable = false;
-    setting.window.size = Size::new(300.0, 600.0);
-
-    Player::run(setting)
+    iced::application("musica", Player::update, Player::view)
+        .settings(setting)
+        .resizable(false)
+        .window_size(Size::new(300.0, 600.0))
+        .theme(Player::theme)
+        .run()
 }
 
 pub struct Player {
@@ -48,9 +47,7 @@ pub enum PlayerMessage {
     AskMusicDirectory,
 }
 
-impl Sandbox for Player {
-    type Message = PlayerMessage;
-
+impl Player {
     fn new() -> Self {
         let config_path = config::get_config_path();
         let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
@@ -68,10 +65,6 @@ impl Sandbox for Player {
         app.update_music_list_from_config();
 
         app
-    }
-
-    fn title(&self) -> String {
-        String::from("musica")
     }
 
     fn theme(&self) -> iced::Theme {
@@ -129,7 +122,7 @@ impl Sandbox for Player {
                             .width(Length::Fill),
                     ),)
                     .style(|_: &Theme| {
-                        let mut style = container::Appearance::default();
+                        let mut style = container::Style::default();
                         style.background =
                             Some(iced::Background::Color(Color::from_rgb8(0x44, 0x47, 0x5a)));
                         style.text_color = Some(Color::BLACK);
@@ -147,7 +140,7 @@ impl Sandbox for Player {
                     .height(Length::Fill)
                     .padding(10),
             )
-            .align_items(iced::Alignment::Center),
+            .align_x(alignment::Horizontal::Center),
         )
         .height(Length::Fill)
         .width(Length::Fill)
@@ -156,41 +149,47 @@ impl Sandbox for Player {
         .into();
 
         if self.show_setting_modal {
-            let modal = self.setting_modal_view();
+            let modal_view = self.setting_modal_view();
 
-            Modal::new(content, modal)
-                .on_blur(PlayerMessage::CloseSettingModal)
-                .into()
+            modal::create_modal(content, modal_view, PlayerMessage::CloseSettingModal)
         } else {
             content
         }
     }
 }
 
+impl Default for Player {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Player {
     fn setting_button(&self) -> Element<'static, PlayerMessage> {
-        let style_sheet = SettingButtonStyle {
-            color: Color::from_rgba8(0xff, 0xff, 0xff, 0.5),
-        };
-        let button_style = iced::theme::Button::custom(style_sheet);
-
         let setting_button = button(
             text("setting")
                 .size(12)
-                .horizontal_alignment(alignment::Horizontal::Right)
-                .vertical_alignment(alignment::Vertical::Center),
+                .align_x(alignment::Horizontal::Right)
+                .align_y(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::OpenSettingModal)
         .padding(3)
-        .style(button_style);
+        .style(|_, _| {
+            let mut style = iced::widget::button::Style::default();
+            style.background = Some(iced::Background::Color(Color::from_rgba8(
+                0xff, 0xff, 0xff, 0.5,
+            )));
+            style.border.radius = 10.0.into();
+            style
+        });
 
         setting_button.into()
     }
 
-    fn items_list_view(&self) -> Element<'static, PlayerMessage> {
+    fn items_list_view(&self) -> Element<'_, PlayerMessage> {
         let mut column = Column::new()
             .spacing(5)
-            .align_items(iced::Alignment::Center)
+            .align_x(iced::Alignment::Center)
             .width(Length::Fill);
 
         for value in self.main_state.music_list.list.iter() {
@@ -203,8 +202,8 @@ impl Player {
     fn button_view(&self) -> Element<'static, PlayerMessage> {
         let prev_button = button(
             text("<")
-                .horizontal_alignment(alignment::Horizontal::Center)
-                .vertical_alignment(alignment::Vertical::Center),
+                .align_x(alignment::Horizontal::Center)
+                .align_y(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::PreviousPressed)
         .padding(10)
@@ -213,8 +212,8 @@ impl Player {
 
         let next_button = button(
             text(">")
-                .horizontal_alignment(alignment::Horizontal::Center)
-                .vertical_alignment(alignment::Vertical::Center),
+                .align_x(alignment::Horizontal::Center)
+                .align_y(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::NextPressed)
         .padding(10)
@@ -225,8 +224,8 @@ impl Player {
 
         let resume_or_pause_button = button(
             text(resume_or_pause_button_text)
-                .horizontal_alignment(alignment::Horizontal::Center)
-                .vertical_alignment(alignment::Vertical::Center),
+                .align_x(alignment::Horizontal::Center)
+                .align_y(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::ResumeOrPausePressed)
         .padding(10)
@@ -280,7 +279,13 @@ impl Player {
         };
 
         let directory_error_text = text(directory_error_messasge)
-            .style(Color::from_rgb8(u8::MAX, 0, 0))
+            .style(|_| {
+                let mut style = text::Style::default();
+
+                style.color = Some(Color::from_rgb8(u8::MAX, 0, 0));
+
+                style
+            })
             .size(9);
 
         let choose_directory_button =
@@ -300,7 +305,7 @@ impl Player {
         )
         .width(250)
         .padding(10)
-        .style(theme::Container::Box);
+        .style(container::rounded_box);
 
         content.into()
     }
