@@ -9,12 +9,12 @@ mod static_assets;
 use std::sync::LazyLock;
 use std::u8;
 
-use config::{read_config_if_exists, Config};
+use config::Config;
 use custom_style::SettingButtonStyle;
 use iced::widget::{self, button, column, container, text, text_input, Column};
 use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};
 use modal::Modal;
-use state::{MainState, MusicList};
+use state::{MainState, Music, MusicList};
 
 static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
 
@@ -55,15 +55,19 @@ impl Sandbox for Player {
         let config_path = config::get_config_path();
         let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
 
-        Self {
+        let mut app = Self {
             main_state: MainState {
-                title: "test name".into(),
+                title: "no music".into(),
                 music_list: MusicList::default(),
                 on_play: false,
             },
             config_data,
             show_setting_modal: false,
-        }
+        };
+
+        app.update_music_list_from_config();
+
+        app
     }
 
     fn title(&self) -> String {
@@ -103,6 +107,8 @@ impl Sandbox for Player {
                 {
                     println!("Failed to update config: {:?}", err);
                 }
+
+                self.update_music_list_from_config();
             }
         }
     }
@@ -183,12 +189,12 @@ impl Player {
 
     fn items_list_view(&self) -> Element<'static, PlayerMessage> {
         let mut column = Column::new()
-            .spacing(10)
+            .spacing(5)
             .align_items(iced::Alignment::Center)
             .width(Length::Fill);
 
         for value in self.main_state.music_list.list.iter() {
-            column = column.push(text(value.title.as_str()));
+            column = column.push(text(value.title.as_str()).size(12));
         }
 
         widget::scrollable(container(column)).width(300).into()
@@ -230,6 +236,23 @@ impl Player {
         widget::row!(prev_button, resume_or_pause_button, next_button,)
             .spacing(10)
             .into()
+    }
+}
+
+impl Player {
+    fn update_music_list_from_config(&mut self) {
+        let music_directory_path = self.config_data.directory_path.clone();
+
+        if let Ok(file_info_list) = file::read_file_list(&music_directory_path) {
+            self.main_state.music_list.list = file_info_list
+                .iter()
+                .filter(|x| x.is_music_file())
+                .map(|x| Music {
+                    title: x.filename.clone(),
+                    file_path: x.filepath.clone(),
+                })
+                .collect();
+        }
     }
 }
 
