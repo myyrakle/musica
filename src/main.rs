@@ -55,7 +55,7 @@ impl Sandbox for Player {
         let config_path = config::get_config_path();
         let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
 
-        Self {
+        let mut app = Self {
             main_state: MainState {
                 title: "no music".into(),
                 music_list: MusicList::default(),
@@ -63,7 +63,11 @@ impl Sandbox for Player {
             },
             config_data,
             show_setting_modal: false,
-        }
+        };
+
+        app.update_music_list_from_config();
+
+        app
     }
 
     fn title(&self) -> String {
@@ -103,6 +107,8 @@ impl Sandbox for Player {
                 {
                     println!("Failed to update config: {:?}", err);
                 }
+
+                self.update_music_list_from_config();
             }
         }
     }
@@ -183,12 +189,12 @@ impl Player {
 
     fn items_list_view(&self) -> Element<'static, PlayerMessage> {
         let mut column = Column::new()
-            .spacing(10)
+            .spacing(5)
             .align_items(iced::Alignment::Center)
             .width(Length::Fill);
 
         for value in self.main_state.music_list.list.iter() {
-            column = column.push(text(value.title.as_str()));
+            column = column.push(text(value.title.as_str()).size(12));
         }
 
         widget::scrollable(container(column)).width(300).into()
