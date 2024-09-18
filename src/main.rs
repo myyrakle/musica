@@ -6,20 +6,18 @@ mod modal;
 mod state;
 mod static_assets;
 
+use std::sync::LazyLock;
+
 use config::{read_config_if_exists, Config};
 use custom_style::SettingButtonStyle;
-use iced::widget::{self, button, column, container, text, Column};
+use iced::widget::{self, button, column, container, text, text_input, Column};
 use iced::{alignment, theme, Color, Element, Length, Sandbox, Settings, Size, Theme};
 use modal::Modal;
 use state::{MainState, MusicList};
 
+static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
+
 pub fn main() -> iced::Result {
-    let path = dialog::open_directory_dialog();
-
-    if let Ok(path) = path {
-        println!("Selected file: {:?}", path);
-    }
-
     let config_path = config::get_config_path();
     config::create_config_if_not_exists(config_path).unwrap();
 
@@ -37,7 +35,7 @@ pub struct Player {
     show_setting_modal: bool,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum PlayerMessage {
     ResumeOrPausePressed,
     NextPressed,
@@ -45,6 +43,7 @@ pub enum PlayerMessage {
 
     OpenSettingModal,
     CloseSettingModal,
+    MusicDirectoryInputChanged(String),
     AskMusicDirectory,
 }
 
@@ -92,6 +91,16 @@ impl Sandbox for Player {
 
                 if let Ok(path) = path {
                     self.config_data.directory_path = path;
+                }
+            }
+            PlayerMessage::MusicDirectoryInputChanged(text) => {
+                self.config_data.directory_path = text.clone().into();
+
+                if let Err(err) = self
+                    .config_data
+                    .update_config_if_exists(config::get_config_path())
+                {
+                    println!("Failed to update config: {:?}", err);
                 }
             }
         }
@@ -225,11 +234,27 @@ impl Player {
 
 impl Player {
     fn setting_modal_view(&self) -> Element<'_, PlayerMessage> {
+        let directory_text_input = text_input(
+            "Music Directory Path",
+            self.config_data
+                .directory_path
+                .as_os_str()
+                .to_str()
+                .unwrap_or_default(),
+        )
+        .id(TEXT_INPUT_ID.clone())
+        .on_input(PlayerMessage::MusicDirectoryInputChanged)
+        .padding(15)
+        .size(13);
+
         let content = container(
             column![
                 text("Setting").size(24),
-                column![button(text("Select Music Directory"))
-                    .on_press(PlayerMessage::AskMusicDirectory)]
+                column![
+                    directory_text_input,
+                    button(text("Choose Music Directory"))
+                        .on_press(PlayerMessage::AskMusicDirectory),
+                ]
                 .spacing(10)
             ]
             .spacing(20),

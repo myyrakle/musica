@@ -7,6 +7,16 @@ pub struct Config {
     pub directory_path: PathBuf, // 재생할 기본 경로
 }
 
+impl Config {
+    pub fn update_config_if_exists(&self, path: PathBuf) -> anyhow::Result<()> {
+        let config_str = serde_json::to_string(self)?;
+
+        fs::write(path, config_str)?;
+
+        Ok(())
+    }
+}
+
 fn get_app_data_path() -> PathBuf {
     let home_dir = env::var("HOME").unwrap_or_else(|_| String::from(""));
 
