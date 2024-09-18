@@ -145,7 +145,7 @@ impl Player {
                     .height(Length::Fill)
                     .padding(10),
             )
-            .align_items(iced::Alignment::Center),
+            .align_x(alignment::Horizontal::Center),
         )
         .height(Length::Fill)
         .width(Length::Fill)
@@ -176,8 +176,8 @@ impl Player {
         let setting_button = button(
             text("setting")
                 .size(12)
-                .horizontal_alignment(alignment::Horizontal::Right)
-                .vertical_alignment(alignment::Vertical::Center),
+                .align_x(alignment::Horizontal::Right)
+                .align_y(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::OpenSettingModal)
         .padding(3)
@@ -191,10 +191,10 @@ impl Player {
         setting_button.into()
     }
 
-    fn items_list_view(&self) -> Element<'static, PlayerMessage> {
+    fn items_list_view(&self) -> Element<'_, PlayerMessage> {
         let mut column = Column::new()
             .spacing(5)
-            .align_items(iced::Alignment::Center)
+            .align_x(iced::Alignment::Center)
             .width(Length::Fill);
 
         for value in self.main_state.music_list.list.iter() {
@@ -207,8 +207,8 @@ impl Player {
     fn button_view(&self) -> Element<'static, PlayerMessage> {
         let prev_button = button(
             text("<")
-                .horizontal_alignment(alignment::Horizontal::Center)
-                .vertical_alignment(alignment::Vertical::Center),
+                .align_x(alignment::Horizontal::Center)
+                .align_y(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::PreviousPressed)
         .padding(10)
@@ -217,8 +217,8 @@ impl Player {
 
         let next_button = button(
             text(">")
-                .horizontal_alignment(alignment::Horizontal::Center)
-                .vertical_alignment(alignment::Vertical::Center),
+                .align_x(alignment::Horizontal::Center)
+                .align_y(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::NextPressed)
         .padding(10)
@@ -229,8 +229,8 @@ impl Player {
 
         let resume_or_pause_button = button(
             text(resume_or_pause_button_text)
-                .horizontal_alignment(alignment::Horizontal::Center)
-                .vertical_alignment(alignment::Vertical::Center),
+                .align_x(alignment::Horizontal::Center)
+                .align_y(alignment::Vertical::Center),
         )
         .on_press(PlayerMessage::ResumeOrPausePressed)
         .padding(10)
