@@ -128,7 +128,7 @@ impl Player {
                             .width(Length::Fill),
                     ),)
                     .style(|_: &Theme| {
-                        let mut style = Default::default();
+                        let mut style = container::Style::default();
                         style.background =
                             Some(iced::Background::Color(Color::from_rgb8(0x44, 0x47, 0x5a)));
                         style.text_color = Some(Color::BLACK);
