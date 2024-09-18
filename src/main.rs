@@ -20,13 +20,12 @@ pub fn main() -> iced::Result {
     let config_path = config::get_config_path();
     config::create_config_if_not_exists(config_path).unwrap();
 
-    let mut setting = Settings::default();
-
-    setting.window.resizable = false;
-    setting.window.size = Size::new(300.0, 600.0);
+    let setting = Settings::default();
 
     iced::application("musica", Player::update, Player::view)
         .settings(setting)
+        .resizable(false)
+        .window_size(Size::new(300.0, 600.0))
         .theme(Player::theme)
         .run()
 }
