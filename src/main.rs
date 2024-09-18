@@ -285,7 +285,13 @@ impl Player {
         };
 
         let directory_error_text = text(directory_error_messasge)
-            .style(Color::from_rgb8(u8::MAX, 0, 0))
+            .style(|_| {
+                let mut style = text::Style::default();
+
+                style.color = Some(Color::from_rgb8(u8::MAX, 0, 0));
+
+                style
+            })
             .size(9);
 
         let choose_directory_button =
