@@ -57,7 +57,7 @@ impl Sandbox for Player {
 
         Self {
             main_state: MainState {
-                title: "test name".into(),
+                title: "no music".into(),
                 music_list: MusicList::default(),
                 on_play: false,
             },
