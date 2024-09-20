@@ -89,6 +89,15 @@ impl Player {
 
                 if let Ok(path) = path {
                     self.config_data.directory_path = path;
+
+                    if let Err(err) = self
+                        .config_data
+                        .update_config_if_exists(config::get_config_path())
+                    {
+                        println!("Failed to update config: {:?}", err);
+                    }
+
+                    self.update_music_list_from_config();
                 }
             }
             PlayerMessage::MusicDirectoryInputChanged(text) => {
