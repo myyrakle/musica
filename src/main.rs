@@ -44,7 +44,7 @@ pub enum PlayerMessage {
     OpenSettingModal,
     CloseSettingModal,
     MusicDirectoryInputChanged(String),
-    AskMusicDirectory,
+    ChooseMusicDirectory,
 }
 
 impl Player {
@@ -84,7 +84,7 @@ impl Player {
             PlayerMessage::CloseSettingModal => {
                 self.show_setting_modal = false;
             }
-            PlayerMessage::AskMusicDirectory => {
+            PlayerMessage::ChooseMusicDirectory => {
                 let path = dialog::open_directory_dialog();
 
                 if let Ok(path) = path {
@@ -298,7 +298,7 @@ impl Player {
             .size(9);
 
         let choose_directory_button =
-            button(text("Choose Directory").size(12)).on_press(PlayerMessage::AskMusicDirectory);
+            button(text("Choose Directory").size(12)).on_press(PlayerMessage::ChooseMusicDirectory);
 
         let content = container(
             column![
