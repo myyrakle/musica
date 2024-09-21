@@ -10,7 +10,7 @@ use std::u8;
 
 use config::Config;
 use iced::widget::{self, button, column, container, text, text_input, Column};
-use iced::{alignment, Color, Element, Length, Settings, Size, Theme};
+use iced::{advanced, alignment, Color, Element, Length, Settings, Size, Theme};
 use state::{MainState, Music, MusicList};
 
 static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
@@ -202,7 +202,11 @@ impl Player {
             .width(Length::Fill);
 
         for value in self.main_state.music_list.list.iter() {
-            column = column.push(text(value.title.as_str()).size(12));
+            column = column.push(
+                text(value.title.as_str())
+                    .size(12)
+                    .shaping(advanced::text::Shaping::Advanced),
+            );
         }
 
         widget::scrollable(container(column)).width(300).into()
