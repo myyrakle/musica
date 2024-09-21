@@ -121,10 +121,14 @@ impl Player {
                 container(
                     container(column!(
                         container(self.setting_button()).padding(0),
-                        container(text(self.main_state.title.as_str()).size(15))
-                            .padding(10)
-                            .align_x(alignment::Horizontal::Center)
-                            .width(Length::Fill),
+                        container(
+                            text(self.main_state.title.as_str())
+                                .size(15)
+                                .shaping(advanced::text::Shaping::Advanced)
+                        )
+                        .padding(10)
+                        .align_x(alignment::Horizontal::Center)
+                        .width(Length::Fill),
                         container(self.button_view())
                             .padding(5)
                             .align_x(alignment::Horizontal::Center)
