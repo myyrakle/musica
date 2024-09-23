@@ -2,12 +2,13 @@ mod dialog;
 mod modal;
 
 use std::sync::LazyLock;
+use std::time::{Duration, Instant};
 use std::u8;
 
 use crate::state::{MainState, Music, MusicList};
 use config::Config;
 use iced::widget::{self, button, column, container, text, text_input, Column};
-use iced::{advanced, alignment, Color, Element, Length, Theme};
+use iced::{advanced, alignment, time, Color, Element, Length, Subscription, Theme};
 
 use crate::{config, file};
 
@@ -29,6 +30,9 @@ pub enum PlayerMessage {
     CloseSettingModal,
     MusicDirectoryInputChanged(String),
     ChooseMusicDirectory,
+
+    MusicEnds,
+    Tick(Instant),
 }
 
 impl Player {
@@ -96,6 +100,10 @@ impl Player {
 
                 self.update_music_list_from_config();
             }
+            PlayerMessage::Tick(_) => {
+                println!("tick");
+            }
+            PlayerMessage::MusicEnds => {}
         }
     }
 
@@ -152,6 +160,12 @@ impl Player {
         } else {
             content
         }
+    }
+
+    pub fn subscription(&self) -> iced::Subscription<PlayerMessage> {
+        let tick = iced::time::every(Duration::from_millis(500)).map(PlayerMessage::Tick);
+
+        Subscription::batch(vec![tick])
     }
 }
 

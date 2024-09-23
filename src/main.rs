@@ -17,5 +17,6 @@ fn main() -> iced::Result {
         .resizable(false)
         .window_size(Size::new(300.0, 600.0))
         .theme(Player::theme)
+        .subscription(Player::subscription)
         .run()
 }
