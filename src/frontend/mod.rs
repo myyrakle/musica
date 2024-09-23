@@ -7,25 +7,11 @@ use std::u8;
 use crate::state::{MainState, Music, MusicList};
 use config::Config;
 use iced::widget::{self, button, column, container, text, text_input, Column};
-use iced::{advanced, alignment, Color, Element, Length, Settings, Size, Theme};
+use iced::{advanced, alignment, Color, Element, Length, Theme};
 
 use crate::{config, file};
 
 static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
-
-pub fn main() -> iced::Result {
-    let config_path = config::get_config_path();
-    config::create_config_if_not_exists(config_path).unwrap();
-
-    let setting = Settings::default();
-
-    iced::application("musica", Player::update, Player::view)
-        .settings(setting)
-        .resizable(false)
-        .window_size(Size::new(300.0, 600.0))
-        .theme(Player::theme)
-        .run()
-}
 
 pub struct Player {
     main_state: MainState,

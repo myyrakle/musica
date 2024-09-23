@@ -2,7 +2,6 @@ mod config;
 mod file;
 mod frontend;
 mod state;
-mod static_assets;
 
 use frontend::Player;
 use iced::{Settings, Size};
