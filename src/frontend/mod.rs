@@ -154,6 +154,14 @@ impl Player {
                 if let Err(error) = self.background_event_sender.send(BackgroundLoopEvent::Tick) {
                     println!("Failed to send event: {:?}", error);
                 }
+
+                let current_music_index = self
+                    .background_state
+                    .current_music_index
+                    .load(std::sync::atomic::Ordering::Acquire);
+
+                let current_music = &self.main_state.music_list.list[current_music_index];
+                self.main_state.title = current_music.title.clone();
             }
         }
     }
