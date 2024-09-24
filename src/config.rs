@@ -4,6 +4,9 @@ use std::path::PathBuf;
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Config {
+    #[serde(default)]
+    pub is_random: bool, // 랜덤 재생 여부
+    #[serde(default)]
     pub directory_path: PathBuf, // 재생할 기본 경로
 }
 
@@ -47,6 +50,7 @@ pub fn create_config_if_not_exists(path: PathBuf) -> anyhow::Result<()> {
     if !path.exists() {
         let config = Config {
             directory_path: env::current_dir()?,
+            is_random: false,
         };
 
         let config_str = serde_json::to_string(&config)?;
