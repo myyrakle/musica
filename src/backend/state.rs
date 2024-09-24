@@ -7,6 +7,7 @@ pub enum BackgroundLoopEvent {
     Next,
     Previous,
     Tick,
+    RandomToggled(bool),
 }
 
 #[derive(Debug, Clone)]

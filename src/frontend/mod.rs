@@ -174,6 +174,13 @@ impl Player {
                 {
                     println!("Failed to update config: {:?}", err);
                 }
+
+                if let Err(error) = self
+                    .background_event_sender
+                    .send(BackgroundLoopEvent::RandomToggled(flag))
+                {
+                    println!("Failed to send event: {:?}", error);
+                }
             }
         }
     }
