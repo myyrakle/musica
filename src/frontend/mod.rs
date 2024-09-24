@@ -175,6 +175,7 @@ impl Player {
                         container(
                             text(self.main_state.title.as_str())
                                 .size(15)
+                                .height(Length::Fill)
                                 .shaping(advanced::text::Shaping::Advanced)
                         )
                         .padding(10)
