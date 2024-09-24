@@ -9,6 +9,7 @@ pub enum BackgroundLoopEvent {
     Tick,
 }
 
+#[derive(Debug, Clone)]
 pub struct BackgroundState {
     pub current_music_index: Arc<AtomicUsize>,
 }

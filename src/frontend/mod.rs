@@ -48,7 +48,7 @@ impl Player {
 
         let (sender, receiver) = mpsc::channel::<BackgroundLoopEvent>();
 
-        let mucis_controller = BackgroundState {
+        let background_state = BackgroundState {
             current_music_index: Default::default(),
         };
 
@@ -60,7 +60,7 @@ impl Player {
             },
             config_data,
             show_setting_modal: false,
-            background_state: mucis_controller,
+            background_state,
             background_event_sender: sender,
         };
 
@@ -72,7 +72,7 @@ impl Player {
 
         let music_list = app.main_state.music_list.clone();
 
-        background_loop(receiver, music_list);
+        background_loop(receiver, app.background_state.clone(), music_list);
 
         app
     }
