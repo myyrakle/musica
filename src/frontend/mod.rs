@@ -82,6 +82,28 @@ impl Player {
     pub fn update(&mut self, message: PlayerMessage) {
         match message {
             PlayerMessage::ResumeOrPausePressed => {
+                if self.main_state.on_play {
+                    if let Err(error) = self
+                        .music_controller
+                        .event_sender
+                        .send(BackgroundLoopEvent::Pause)
+                    {
+                        println!("Failed to send event: {:?}", error);
+                    }
+
+                    self.main_state.on_play = false;
+                } else {
+                    if let Err(error) = self
+                        .music_controller
+                        .event_sender
+                        .send(BackgroundLoopEvent::Resume)
+                    {
+                        println!("Failed to send event: {:?}", error);
+                    }
+
+                    self.main_state.on_play = true;
+                }
+
                 self.main_state.on_play = !self.main_state.on_play;
             }
             PlayerMessage::NextPressed => {
