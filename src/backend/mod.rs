@@ -107,7 +107,33 @@ pub fn background_loop(
                             }
                         }
                     }
-                    BackgroundLoopEvent::Tick => {}
+                    BackgroundLoopEvent::Tick => {
+                        if sink.empty() {
+                            let mut index = background_state
+                                .current_music_index
+                                .load(std::sync::atomic::Ordering::Acquire);
+
+                            index += 1;
+
+                            if index >= music_list.list.len() {
+                                index = 0;
+                            }
+
+                            background_state
+                                .current_music_index
+                                .store(index, std::sync::atomic::Ordering::Relaxed);
+
+                            if music_list.is_not_empty() {
+                                if let Ok(source) =
+                                    get_current_music_source(&mut background_state, &music_list)
+                                {
+                                    sink.clear();
+                                    sink.play();
+                                    sink.append(source);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
