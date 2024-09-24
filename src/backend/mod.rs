@@ -38,10 +38,14 @@ pub fn background_loop(
                         }
                     }
                     BackgroundLoopEvent::Pause => {
-                        sink.pause();
+                        if !sink.is_paused() {
+                            sink.pause();
+                        }
                     }
                     BackgroundLoopEvent::Resume => {
-                        todo!();
+                        if sink.is_paused() {
+                            sink.play();
+                        }
                     }
                     BackgroundLoopEvent::Next => {
                         todo!();

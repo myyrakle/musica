@@ -56,7 +56,7 @@ impl Player {
             main_state: MainState {
                 title: "no music".into(),
                 music_list: MusicList::default(),
-                on_play: false,
+                on_play: true,
             },
             config_data,
             show_setting_modal: false,
@@ -102,8 +102,6 @@ impl Player {
 
                     self.main_state.on_play = true;
                 }
-
-                self.main_state.on_play = !self.main_state.on_play;
             }
             PlayerMessage::NextPressed => {
                 if let Err(error) = self.background_event_sender.send(BackgroundLoopEvent::Next) {
