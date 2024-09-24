@@ -159,7 +159,13 @@ impl Player {
                 self.update_music_list_from_config();
             }
             PlayerMessage::Tick(_) => {
-                println!("tick");
+                if let Err(error) = self
+                    .music_controller
+                    .event_sender
+                    .send(BackgroundLoopEvent::Tick)
+                {
+                    println!("Failed to send event: {:?}", error);
+                }
             }
         }
     }

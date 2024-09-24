@@ -6,6 +6,7 @@ pub enum BackgroundLoopEvent {
     Resume,
     Next,
     Previous,
+    Tick,
 }
 
 pub struct MusicController {

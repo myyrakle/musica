@@ -37,6 +37,9 @@ pub fn background_loop(receiver: Receiver<BackgroundLoopEvent>, music_list: Musi
                     BackgroundLoopEvent::Previous => {
                         todo!();
                     }
+                    BackgroundLoopEvent::Tick => {
+                        todo!();
+                    }
                 }
             }
         }
