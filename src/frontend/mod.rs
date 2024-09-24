@@ -10,7 +10,7 @@ use crate::backend::background_loop;
 use crate::backend::state::{BackgroundLoopEvent, BackgroundState};
 use crate::state::{MainState, Music, MusicList};
 use config::Config;
-use iced::widget::{self, button, column, container, text, text_input, Column};
+use iced::widget::{self, button, column, container, text, text_input, toggler, Column};
 use iced::{advanced, alignment, Color, Element, Length, Subscription, Theme};
 
 use crate::{config, file};
@@ -36,6 +36,8 @@ pub enum PlayerMessage {
     CloseSettingModal,
     MusicDirectoryInputChanged(String),
     ChooseMusicDirectory,
+
+    RandomToggled(bool),
 
     #[allow(dead_code)]
     Tick(Instant),
@@ -162,6 +164,16 @@ impl Player {
 
                 let current_music = &self.main_state.music_list.list[current_music_index];
                 self.main_state.title = current_music.title.clone();
+            }
+            PlayerMessage::RandomToggled(flag) => {
+                self.config_data.is_random = flag;
+
+                if let Err(err) = self
+                    .config_data
+                    .update_config_if_exists(config::get_config_path())
+                {
+                    println!("Failed to update config: {:?}", err);
+                }
             }
         }
     }
@@ -332,6 +344,11 @@ impl Player {
 
 impl Player {
     fn setting_modal_view(&self) -> Element<'_, PlayerMessage> {
+        let toggler = toggler(self.config_data.is_random)
+            .label("Random Mode")
+            .on_toggle(PlayerMessage::RandomToggled)
+            .spacing(15);
+
         let directory_path = self.config_data.directory_path.clone();
         let directory_path_text = directory_path.as_os_str().to_str().unwrap_or_default();
 
@@ -369,6 +386,7 @@ impl Player {
         let content = container(
             column![
                 text("Setting").size(24),
+                column![toggler,].spacing(10),
                 column![
                     directory_text_input,
                     directory_error_text,
