@@ -13,7 +13,7 @@ fn get_current_music_source(
 ) -> anyhow::Result<Decoder<BufReader<File>>> {
     let index = background_state
         .current_music_index
-        .load(std::sync::atomic::Ordering::Relaxed);
+        .load(std::sync::atomic::Ordering::Acquire);
 
     let current_music = music_list.list[index].clone();
     let file = std::fs::File::open(&current_music.file_path)?;
@@ -58,7 +58,29 @@ pub fn background_loop(
                         }
                     }
                     BackgroundLoopEvent::Next => {
-                        todo!();
+                        let mut index = background_state
+                            .current_music_index
+                            .load(std::sync::atomic::Ordering::Acquire);
+
+                        index += 1;
+
+                        if index >= music_list.list.len() {
+                            index = 0;
+                        }
+
+                        background_state
+                            .current_music_index
+                            .store(index, std::sync::atomic::Ordering::Relaxed);
+
+                        if music_list.is_not_empty() {
+                            if let Ok(source) =
+                                get_current_music_source(&mut background_state, &music_list)
+                            {
+                                sink.clear();
+                                sink.play();
+                                sink.append(source);
+                            }
+                        }
                     }
                     BackgroundLoopEvent::Previous => {
                         todo!();
