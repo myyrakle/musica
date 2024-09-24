@@ -35,7 +35,7 @@ pub enum PlayerMessage {
     MusicDirectoryInputChanged(String),
     ChooseMusicDirectory,
 
-    MusicEnds,
+    #[allow(dead_code)]
     Tick(Instant),
 }
 
@@ -75,7 +75,6 @@ impl Player {
 
         app
     }
-
     pub fn theme(&self) -> iced::Theme {
         iced::Theme::Dracula
     }
@@ -124,7 +123,6 @@ impl Player {
             PlayerMessage::Tick(_) => {
                 println!("tick");
             }
-            PlayerMessage::MusicEnds => {}
         }
     }
 

@@ -25,7 +25,18 @@ pub fn background_loop(receiver: Receiver<MusicSinkReceiveEvent>, music_list: Mu
                             }
                         }
                     }
-                    _ => {}
+                    MusicSinkReceiveEvent::Pause => {
+                        todo!();
+                    }
+                    MusicSinkReceiveEvent::Resume => {
+                        todo!();
+                    }
+                    MusicSinkReceiveEvent::Next => {
+                        todo!();
+                    }
+                    MusicSinkReceiveEvent::Previous => {
+                        todo!();
+                    }
                 }
             }
         }
