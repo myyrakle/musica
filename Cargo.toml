@@ -2,6 +2,14 @@
 name = "musica-app"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+authors = ["myyrakle <sssang97@naver.com>"] 
+description = "simple music player" 
+keywords = ["music", "player", "mp3", "ogg"] 
+readme = "README.md"
+repository = "https://github.com/myyrakle/musica" 
+documentation = "https://docs.rs/musica/latest/musica" 
+homepage = "https://github.com/myyrakle/musica/blob/master/README.md" 
 
 [dependencies]
 anyhow = "1.0.88"
