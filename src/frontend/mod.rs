@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 use std::{thread, u8};
 
 use crate::backend::background_loop;
-use crate::controller::{MusicController, MusicSinkReceiveEvent};
+use crate::controller::{BackgroundLoopEvent, MusicController};
 use crate::state::{MainState, Music, MusicList};
 use config::Config;
 use iced::widget::{self, button, column, container, text, text_input, Column};
@@ -44,7 +44,7 @@ impl Player {
         let config_path = config::get_config_path();
         let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
 
-        let (sender, receiver) = mpsc::channel::<MusicSinkReceiveEvent>();
+        let (sender, receiver) = mpsc::channel::<BackgroundLoopEvent>();
 
         let mucis_controller = MusicController {
             current_music_index: Default::default(),
@@ -66,7 +66,7 @@ impl Player {
 
         app.music_controller
             .event_sender
-            .send(MusicSinkReceiveEvent::Play)
+            .send(BackgroundLoopEvent::Play)
             .unwrap();
 
         let music_list = app.main_state.music_list.clone();

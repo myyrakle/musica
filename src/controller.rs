@@ -1,6 +1,6 @@
 use std::sync::{atomic::AtomicUsize, mpsc::Sender, Arc};
 
-pub enum MusicSinkReceiveEvent {
+pub enum BackgroundLoopEvent {
     Play,
     Pause,
     Resume,
@@ -9,6 +9,6 @@ pub enum MusicSinkReceiveEvent {
 }
 
 pub struct MusicController {
-    pub event_sender: Sender<MusicSinkReceiveEvent>,
+    pub event_sender: Sender<BackgroundLoopEvent>,
     pub current_music_index: Arc<AtomicUsize>,
 }

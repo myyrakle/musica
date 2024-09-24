@@ -1,8 +1,8 @@
 use std::{sync::mpsc::Receiver, thread};
 
-use crate::{controller::MusicSinkReceiveEvent, state::MusicList};
+use crate::{controller::BackgroundLoopEvent, state::MusicList};
 
-pub fn background_loop(receiver: Receiver<MusicSinkReceiveEvent>, music_list: MusicList) {
+pub fn background_loop(receiver: Receiver<BackgroundLoopEvent>, music_list: MusicList) {
     thread::spawn(move || {
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         let sink = rodio::Sink::try_new(&handle).unwrap();
@@ -10,7 +10,7 @@ pub fn background_loop(receiver: Receiver<MusicSinkReceiveEvent>, music_list: Mu
         loop {
             if let Ok(event) = receiver.recv() {
                 match event {
-                    MusicSinkReceiveEvent::Play => {
+                    BackgroundLoopEvent::Play => {
                         if music_list.is_not_empty() {
                             let current_music = music_list.list[0].clone();
                             let file = std::fs::File::open(&current_music.file_path).unwrap();
@@ -25,16 +25,16 @@ pub fn background_loop(receiver: Receiver<MusicSinkReceiveEvent>, music_list: Mu
                             }
                         }
                     }
-                    MusicSinkReceiveEvent::Pause => {
+                    BackgroundLoopEvent::Pause => {
                         todo!();
                     }
-                    MusicSinkReceiveEvent::Resume => {
+                    BackgroundLoopEvent::Resume => {
                         todo!();
                     }
-                    MusicSinkReceiveEvent::Next => {
+                    BackgroundLoopEvent::Next => {
                         todo!();
                     }
-                    MusicSinkReceiveEvent::Previous => {
+                    BackgroundLoopEvent::Previous => {
                         todo!();
                     }
                 }
