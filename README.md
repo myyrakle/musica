@@ -4,6 +4,9 @@
 
 simple music player
 
+![image](https://github.com/user-attachments/assets/7d1c9a05-116b-4aaa-989a-33edd491b057)
+
+
 ## Install 
 
 ```bash
