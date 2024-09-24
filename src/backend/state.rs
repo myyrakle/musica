@@ -14,6 +14,7 @@ pub enum BackgroundLoopEvent {
 
 #[derive(Debug, Clone)]
 pub struct BackgroundState {
-    pub current_music_index: Arc<AtomicUsize>,
+    pub current_index: Arc<AtomicUsize>, // Random 인덱스를 거치지 않은 순수한 1-N 인덱스
+    pub current_music_index: Arc<AtomicUsize>, // Random 인덱스를 거쳐서 실제 재생 대상을 가리키는 인덱스
     pub is_random_mode: Arc<AtomicBool>,
 }

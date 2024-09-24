@@ -13,7 +13,7 @@ fn get_current_music_source(
     music_list: &MusicList,
 ) -> anyhow::Result<Decoder<BufReader<File>>> {
     let mut index = background_state
-        .current_music_index
+        .current_index
         .load(std::sync::atomic::Ordering::Acquire);
 
     if background_state
@@ -22,6 +22,10 @@ fn get_current_music_source(
     {
         index = random_indices[index];
     }
+
+    background_state
+        .current_music_index
+        .store(index, std::sync::atomic::Ordering::Release);
 
     let current_music = music_list.list[index].clone();
     let file = std::fs::File::open(&current_music.file_path)?;
@@ -79,7 +83,7 @@ pub fn background_loop(
                     }
                     BackgroundLoopEvent::Next => {
                         let mut index = background_state
-                            .current_music_index
+                            .current_index
                             .load(std::sync::atomic::Ordering::Acquire);
 
                         index += 1;
@@ -89,7 +93,7 @@ pub fn background_loop(
                         }
 
                         background_state
-                            .current_music_index
+                            .current_index
                             .store(index, std::sync::atomic::Ordering::Relaxed);
 
                         if music_list.is_not_empty() {
@@ -106,7 +110,7 @@ pub fn background_loop(
                     }
                     BackgroundLoopEvent::Previous => {
                         let mut index = background_state
-                            .current_music_index
+                            .current_index
                             .load(std::sync::atomic::Ordering::Acquire);
 
                         if index == 0 {
@@ -116,7 +120,7 @@ pub fn background_loop(
                         }
 
                         background_state
-                            .current_music_index
+                            .current_index
                             .store(index, std::sync::atomic::Ordering::Relaxed);
 
                         if music_list.is_not_empty() {
@@ -134,7 +138,7 @@ pub fn background_loop(
                     BackgroundLoopEvent::Tick => {
                         if sink.empty() {
                             let mut index = background_state
-                                .current_music_index
+                                .current_index
                                 .load(std::sync::atomic::Ordering::Acquire);
 
                             index += 1;
@@ -144,7 +148,7 @@ pub fn background_loop(
                             }
 
                             background_state
-                                .current_music_index
+                                .current_index
                                 .store(index, std::sync::atomic::Ordering::Relaxed);
 
                             if music_list.is_not_empty() {

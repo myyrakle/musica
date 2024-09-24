@@ -52,6 +52,7 @@ impl Player {
 
         let background_state = BackgroundState {
             current_music_index: Default::default(),
+            current_index: Default::default(),
             is_random_mode: Arc::new(config_data.is_random.into()),
         };
 
