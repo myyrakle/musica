@@ -36,6 +36,14 @@ pub fn background_loop(
 
         thread::sleep(std::time::Duration::from_millis(2000));
 
+        // shuffled index list
+        let mut randome_indices = (0..music_list.list.len()).collect::<Vec<_>>();
+
+        {
+            use rand::seq::SliceRandom;
+            randome_indices.shuffle(&mut rand::thread_rng());
+        }
+
         loop {
             if let Ok(event) = receiver.recv() {
                 match event {
