@@ -5,6 +5,7 @@ use std::sync::{mpsc, LazyLock};
 use std::time::{Duration, Instant};
 use std::{thread, u8};
 
+use crate::backend::background_loop;
 use crate::controller::{MusicController, MusicSinkReceiveEvent};
 use crate::state::{MainState, Music, MusicList};
 use config::Config;
@@ -69,33 +70,8 @@ impl Player {
             .unwrap();
 
         let music_list = app.main_state.music_list.clone();
-        thread::spawn(move || {
-            let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-            let sink = rodio::Sink::try_new(&handle).unwrap();
 
-            loop {
-                if let Ok(event) = receiver.recv() {
-                    match event {
-                        MusicSinkReceiveEvent::Play => {
-                            if music_list.is_not_empty() {
-                                let current_music = music_list.list[0].clone();
-                                let file = std::fs::File::open(&current_music.file_path).unwrap();
-                                let buffer = std::io::BufReader::new(file);
-                                println!("file: {:?}", current_music.file_path);
-
-                                let source = rodio::Decoder::new(buffer).unwrap();
-
-                                {
-                                    sink.play();
-                                    sink.append(source);
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-            }
-        });
+        background_loop(receiver, music_list);
 
         app
     }

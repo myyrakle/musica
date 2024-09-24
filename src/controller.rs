@@ -1,4 +1,7 @@
-use std::sync::{atomic::AtomicUsize, mpsc::Sender, Arc};
+use std::{
+    collections::VecDeque,
+    sync::{atomic::AtomicUsize, mpsc::Sender, Arc},
+};
 
 pub enum MusicSinkReceiveEvent {
     Play,
