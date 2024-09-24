@@ -1,14 +1,15 @@
 mod dialog;
 mod modal;
 
-use std::sync::LazyLock;
+use std::sync::{mpsc, LazyLock};
 use std::time::{Duration, Instant};
-use std::u8;
+use std::{thread, u8};
 
+use crate::controller::{MusicController, MusicSinkReceiveEvent};
 use crate::state::{MainState, Music, MusicList};
 use config::Config;
 use iced::widget::{self, button, column, container, text, text_input, Column};
-use iced::{advanced, alignment, time, Color, Element, Length, Subscription, Theme};
+use iced::{advanced, alignment, Color, Element, Length, Subscription, Theme};
 
 use crate::{config, file};
 
@@ -18,6 +19,8 @@ pub struct Player {
     main_state: MainState,
     config_data: Config,
     show_setting_modal: bool,
+
+    music_controller: MusicController,
 }
 
 #[derive(Debug, Clone)]
@@ -40,6 +43,13 @@ impl Player {
         let config_path = config::get_config_path();
         let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
 
+        let (sender, receiver) = mpsc::channel::<MusicSinkReceiveEvent>();
+
+        let mucis_controller = MusicController {
+            current_music_index: Default::default(),
+            event_sender: sender,
+        };
+
         let mut app = Self {
             main_state: MainState {
                 title: "no music".into(),
@@ -48,9 +58,44 @@ impl Player {
             },
             config_data,
             show_setting_modal: false,
+            music_controller: mucis_controller,
         };
 
         app.update_music_list_from_config();
+
+        app.music_controller
+            .event_sender
+            .send(MusicSinkReceiveEvent::Play)
+            .unwrap();
+
+        let music_list = app.main_state.music_list.clone();
+        thread::spawn(move || {
+            let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
+            let sink = rodio::Sink::try_new(&handle).unwrap();
+
+            loop {
+                if let Ok(event) = receiver.recv() {
+                    match event {
+                        MusicSinkReceiveEvent::Play => {
+                            if music_list.is_not_empty() {
+                                let current_music = music_list.list[0].clone();
+                                let file = std::fs::File::open(&current_music.file_path).unwrap();
+                                let buffer = std::io::BufReader::new(file);
+                                println!("file: {:?}", current_music.file_path);
+
+                                let source = rodio::Decoder::new(buffer).unwrap();
+
+                                {
+                                    sink.play();
+                                    sink.append(source);
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        });
 
         app
     }

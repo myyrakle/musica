@@ -17,6 +17,12 @@ pub struct MusicList {
     pub list: Vec<Music>,
 }
 
+impl MusicList {
+    pub fn is_not_empty(&self) -> bool {
+        !self.list.is_empty()
+    }
+}
+
 impl Default for MusicList {
     fn default() -> Self {
         Self { list: vec![] }
