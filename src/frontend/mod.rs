@@ -278,7 +278,7 @@ impl Player {
     fn items_list_view(&self) -> Element<'_, PlayerMessage> {
         let mut column = Column::new()
             .spacing(5)
-            .align_x(iced::Alignment::Center)
+            .align_x(iced::Alignment::Start)
             .width(Length::Fill);
 
         for value in self.main_state.music_list.list.iter() {
