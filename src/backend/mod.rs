@@ -1,14 +1,33 @@
 pub mod state;
 
-use std::{sync::mpsc::Receiver, thread};
+use std::{fs::File, io::BufReader, sync::mpsc::Receiver, thread};
 
+use rodio::Decoder;
 use state::{BackgroundLoopEvent, BackgroundState};
 
 use crate::state::MusicList;
 
+fn get_current_music_source(
+    background_state: &mut BackgroundState,
+    music_list: &MusicList,
+) -> anyhow::Result<Decoder<BufReader<File>>> {
+    let index = background_state
+        .current_music_index
+        .load(std::sync::atomic::Ordering::Relaxed);
+
+    let current_music = music_list.list[index].clone();
+    let file = std::fs::File::open(&current_music.file_path)?;
+    let buffer = std::io::BufReader::new(file);
+    println!("file: {:?}", current_music.file_path);
+
+    let source = rodio::Decoder::new(buffer)?;
+
+    Ok(source)
+}
+
 pub fn background_loop(
     receiver: Receiver<BackgroundLoopEvent>,
-    background_state: BackgroundState,
+    mut background_state: BackgroundState,
     music_list: MusicList,
 ) {
     thread::spawn(move || {
@@ -20,17 +39,8 @@ pub fn background_loop(
                 match event {
                     BackgroundLoopEvent::Play => {
                         if music_list.is_not_empty() {
-                            let index = background_state
-                                .current_music_index
-                                .load(std::sync::atomic::Ordering::Relaxed);
-
-                            let current_music = music_list.list[index].clone();
-                            let file = std::fs::File::open(&current_music.file_path).unwrap();
-                            let buffer = std::io::BufReader::new(file);
-                            println!("file: {:?}", current_music.file_path);
-
-                            let source = rodio::Decoder::new(buffer).unwrap();
-
+                            if let Ok(source) =
+                                get_current_music_source(&mut background_state, &music_list)
                             {
                                 sink.play();
                                 sink.append(source);
