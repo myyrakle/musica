@@ -175,6 +175,10 @@ impl Player {
                 {
                     println!("Failed to update config: {:?}", err);
                 }
+
+                self.background_state
+                    .is_random_mode
+                    .store(flag, std::sync::atomic::Ordering::Relaxed);
             }
         }
     }
