@@ -1,9 +1,10 @@
 mod dialog;
 mod modal;
 
+use std::sync::mpsc::Sender;
 use std::sync::{mpsc, LazyLock};
 use std::time::{Duration, Instant};
-use std::{thread, u8};
+use std::u8;
 
 use crate::backend::background_loop;
 use crate::controller::{BackgroundLoopEvent, MusicController};
@@ -21,6 +22,7 @@ pub struct Player {
     config_data: Config,
     show_setting_modal: bool,
 
+    background_event_sender: Sender<BackgroundLoopEvent>,
     music_controller: MusicController,
 }
 
@@ -48,7 +50,6 @@ impl Player {
 
         let mucis_controller = MusicController {
             current_music_index: Default::default(),
-            event_sender: sender,
         };
 
         let mut app = Self {
@@ -60,12 +61,12 @@ impl Player {
             config_data,
             show_setting_modal: false,
             music_controller: mucis_controller,
+            background_event_sender: sender,
         };
 
         app.update_music_list_from_config();
 
-        app.music_controller
-            .event_sender
+        app.background_event_sender
             .send(BackgroundLoopEvent::Play)
             .unwrap();
 
@@ -84,8 +85,7 @@ impl Player {
             PlayerMessage::ResumeOrPausePressed => {
                 if self.main_state.on_play {
                     if let Err(error) = self
-                        .music_controller
-                        .event_sender
+                        .background_event_sender
                         .send(BackgroundLoopEvent::Pause)
                     {
                         println!("Failed to send event: {:?}", error);
@@ -94,8 +94,7 @@ impl Player {
                     self.main_state.on_play = false;
                 } else {
                     if let Err(error) = self
-                        .music_controller
-                        .event_sender
+                        .background_event_sender
                         .send(BackgroundLoopEvent::Resume)
                     {
                         println!("Failed to send event: {:?}", error);
@@ -107,18 +106,13 @@ impl Player {
                 self.main_state.on_play = !self.main_state.on_play;
             }
             PlayerMessage::NextPressed => {
-                if let Err(error) = self
-                    .music_controller
-                    .event_sender
-                    .send(BackgroundLoopEvent::Next)
-                {
+                if let Err(error) = self.background_event_sender.send(BackgroundLoopEvent::Next) {
                     println!("Failed to send event: {:?}", error);
                 }
             }
             PlayerMessage::PreviousPressed => {
                 if let Err(error) = self
-                    .music_controller
-                    .event_sender
+                    .background_event_sender
                     .send(BackgroundLoopEvent::Previous)
                 {
                     println!("Failed to send event: {:?}", error);
@@ -159,11 +153,7 @@ impl Player {
                 self.update_music_list_from_config();
             }
             PlayerMessage::Tick(_) => {
-                if let Err(error) = self
-                    .music_controller
-                    .event_sender
-                    .send(BackgroundLoopEvent::Tick)
-                {
+                if let Err(error) = self.background_event_sender.send(BackgroundLoopEvent::Tick) {
                     println!("Failed to send event: {:?}", error);
                 }
             }

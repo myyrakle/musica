@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+#[derive(Debug, Clone)]
 pub struct MainState {
     pub title: String,
     pub music_list: MusicList,

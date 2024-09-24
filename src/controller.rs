@@ -1,4 +1,4 @@
-use std::sync::{atomic::AtomicUsize, mpsc::Sender, Arc};
+use std::sync::{atomic::AtomicUsize, Arc};
 
 pub enum BackgroundLoopEvent {
     Play,
@@ -10,6 +10,5 @@ pub enum BackgroundLoopEvent {
 }
 
 pub struct MusicController {
-    pub event_sender: Sender<BackgroundLoopEvent>,
     pub current_music_index: Arc<AtomicUsize>,
 }
