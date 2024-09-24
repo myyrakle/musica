@@ -38,7 +38,7 @@ pub fn background_loop(
                         }
                     }
                     BackgroundLoopEvent::Pause => {
-                        todo!();
+                        sink.pause();
                     }
                     BackgroundLoopEvent::Resume => {
                         todo!();
