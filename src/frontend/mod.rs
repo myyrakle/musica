@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use std::u8;
 
 use crate::backend::background_loop;
-use crate::controller::{BackgroundLoopEvent, MusicController};
+use crate::backend::state::{BackgroundLoopEvent, BackgroundState};
 use crate::state::{MainState, Music, MusicList};
 use config::Config;
 use iced::widget::{self, button, column, container, text, text_input, Column};
@@ -23,7 +23,7 @@ pub struct Player {
     show_setting_modal: bool,
 
     background_event_sender: Sender<BackgroundLoopEvent>,
-    music_controller: MusicController,
+    background_state: BackgroundState,
 }
 
 #[derive(Debug, Clone)]
@@ -48,7 +48,7 @@ impl Player {
 
         let (sender, receiver) = mpsc::channel::<BackgroundLoopEvent>();
 
-        let mucis_controller = MusicController {
+        let mucis_controller = BackgroundState {
             current_music_index: Default::default(),
         };
 
@@ -60,7 +60,7 @@ impl Player {
             },
             config_data,
             show_setting_modal: false,
-            music_controller: mucis_controller,
+            background_state: mucis_controller,
             background_event_sender: sender,
         };
 

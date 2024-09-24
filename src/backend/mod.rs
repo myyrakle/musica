@@ -1,6 +1,10 @@
+pub mod state;
+
 use std::{sync::mpsc::Receiver, thread};
 
-use crate::{controller::BackgroundLoopEvent, state::MusicList};
+use state::BackgroundLoopEvent;
+
+use crate::state::MusicList;
 
 pub fn background_loop(receiver: Receiver<BackgroundLoopEvent>, music_list: MusicList) {
     thread::spawn(move || {

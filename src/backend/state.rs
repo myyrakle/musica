@@ -9,6 +9,6 @@ pub enum BackgroundLoopEvent {
     Tick,
 }
 
-pub struct MusicController {
+pub struct BackgroundState {
     pub current_music_index: Arc<AtomicUsize>,
 }

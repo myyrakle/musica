@@ -1,6 +1,5 @@
 mod backend;
 mod config;
-mod controller;
 mod file;
 mod frontend;
 mod state;
