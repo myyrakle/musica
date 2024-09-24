@@ -34,6 +34,8 @@ pub fn background_loop(
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         let sink = rodio::Sink::try_new(&handle).unwrap();
 
+        thread::sleep(std::time::Duration::from_millis(2000));
+
         loop {
             if let Ok(event) = receiver.recv() {
                 match event {
