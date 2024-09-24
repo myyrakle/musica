@@ -84,8 +84,24 @@ impl Player {
             PlayerMessage::ResumeOrPausePressed => {
                 self.main_state.on_play = !self.main_state.on_play;
             }
-            PlayerMessage::NextPressed => {}
-            PlayerMessage::PreviousPressed => {}
+            PlayerMessage::NextPressed => {
+                if let Err(error) = self
+                    .music_controller
+                    .event_sender
+                    .send(BackgroundLoopEvent::Next)
+                {
+                    println!("Failed to send event: {:?}", error);
+                }
+            }
+            PlayerMessage::PreviousPressed => {
+                if let Err(error) = self
+                    .music_controller
+                    .event_sender
+                    .send(BackgroundLoopEvent::Previous)
+                {
+                    println!("Failed to send event: {:?}", error);
+                }
+            }
             PlayerMessage::OpenSettingModal => {
                 self.show_setting_modal = true;
             }
