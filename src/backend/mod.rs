@@ -83,7 +83,29 @@ pub fn background_loop(
                         }
                     }
                     BackgroundLoopEvent::Previous => {
-                        todo!();
+                        let mut index = background_state
+                            .current_music_index
+                            .load(std::sync::atomic::Ordering::Acquire);
+
+                        if index == 0 {
+                            index = music_list.list.len() - 1;
+                        } else {
+                            index -= 1;
+                        }
+
+                        background_state
+                            .current_music_index
+                            .store(index, std::sync::atomic::Ordering::Relaxed);
+
+                        if music_list.is_not_empty() {
+                            if let Ok(source) =
+                                get_current_music_source(&mut background_state, &music_list)
+                            {
+                                sink.clear();
+                                sink.play();
+                                sink.append(source);
+                            }
+                        }
                     }
                     BackgroundLoopEvent::Tick => {}
                 }
