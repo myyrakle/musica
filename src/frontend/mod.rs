@@ -2,7 +2,7 @@ mod dialog;
 mod modal;
 
 use std::sync::mpsc::Sender;
-use std::sync::{mpsc, LazyLock};
+use std::sync::{mpsc, Arc, LazyLock};
 use std::time::{Duration, Instant};
 use std::u8;
 
@@ -52,6 +52,7 @@ impl Player {
 
         let background_state = BackgroundState {
             current_music_index: Default::default(),
+            is_random_mode: Arc::new(config_data.is_random.into()),
         };
 
         let mut app = Self {
@@ -173,13 +174,6 @@ impl Player {
                     .update_config_if_exists(config::get_config_path())
                 {
                     println!("Failed to update config: {:?}", err);
-                }
-
-                if let Err(error) = self
-                    .background_event_sender
-                    .send(BackgroundLoopEvent::RandomToggled(flag))
-                {
-                    println!("Failed to send event: {:?}", error);
                 }
             }
         }
