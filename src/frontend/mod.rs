@@ -17,7 +17,7 @@ use crate::{config, file};
 
 static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
 
-pub struct Player {
+pub struct MainApp {
     main_state: MainState,
     config_data: Config,
     show_setting_modal: bool,
@@ -43,7 +43,7 @@ pub enum PlayerMessage {
     Tick(Instant),
 }
 
-impl Player {
+impl MainApp {
     pub fn new() -> Self {
         let config_path = config::get_config_path();
         let config_data = config::read_config_if_exists(config_path).unwrap_or_default();
@@ -247,13 +247,13 @@ impl Player {
     }
 }
 
-impl Default for Player {
+impl Default for MainApp {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Player {
+impl MainApp {
     pub fn setting_button(&self) -> Element<'static, PlayerMessage> {
         let setting_button = button(
             text("setting")
@@ -331,7 +331,7 @@ impl Player {
     }
 }
 
-impl Player {
+impl MainApp {
     fn update_music_list_from_config(&mut self) {
         let music_directory_path = self.config_data.directory_path.clone();
 
@@ -348,7 +348,7 @@ impl Player {
     }
 }
 
-impl Player {
+impl MainApp {
     fn setting_modal_view(&self) -> Element<'_, PlayerMessage> {
         let toggler = toggler(self.config_data.is_random)
             .label("Random Mode")
