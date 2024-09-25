@@ -27,7 +27,7 @@ pub struct MainApp {
 }
 
 #[derive(Debug, Clone)]
-pub enum PlayerMessage {
+pub enum ForegroundEvent {
     ResumeOrPausePressed,
     NextPressed,
     PreviousPressed,
@@ -84,9 +84,9 @@ impl MainApp {
         iced::Theme::Dracula
     }
 
-    pub fn update(&mut self, message: PlayerMessage) {
+    pub fn update(&mut self, message: ForegroundEvent) {
         match message {
-            PlayerMessage::ResumeOrPausePressed => {
+            ForegroundEvent::ResumeOrPausePressed => {
                 if self.main_state.on_play {
                     if let Err(error) = self
                         .background_event_sender
@@ -107,12 +107,12 @@ impl MainApp {
                     self.main_state.on_play = true;
                 }
             }
-            PlayerMessage::NextPressed => {
+            ForegroundEvent::NextPressed => {
                 if let Err(error) = self.background_event_sender.send(BackgroundLoopEvent::Next) {
                     println!("Failed to send event: {:?}", error);
                 }
             }
-            PlayerMessage::PreviousPressed => {
+            ForegroundEvent::PreviousPressed => {
                 if let Err(error) = self
                     .background_event_sender
                     .send(BackgroundLoopEvent::Previous)
@@ -120,13 +120,13 @@ impl MainApp {
                     println!("Failed to send event: {:?}", error);
                 }
             }
-            PlayerMessage::OpenSettingModal => {
+            ForegroundEvent::OpenSettingModal => {
                 self.show_setting_modal = true;
             }
-            PlayerMessage::CloseSettingModal => {
+            ForegroundEvent::CloseSettingModal => {
                 self.show_setting_modal = false;
             }
-            PlayerMessage::ChooseMusicDirectory => {
+            ForegroundEvent::ChooseMusicDirectory => {
                 let path = dialog::open_directory_dialog();
 
                 if let Ok(path) = path {
@@ -142,7 +142,7 @@ impl MainApp {
                     self.update_music_list_from_config();
                 }
             }
-            PlayerMessage::MusicDirectoryInputChanged(text) => {
+            ForegroundEvent::MusicDirectoryInputChanged(text) => {
                 self.config_data.directory_path = text.clone().into();
 
                 if let Err(err) = self
@@ -154,7 +154,7 @@ impl MainApp {
 
                 self.update_music_list_from_config();
             }
-            PlayerMessage::Tick(_) => {
+            ForegroundEvent::Tick(_) => {
                 if let Err(error) = self.background_event_sender.send(BackgroundLoopEvent::Tick) {
                     println!("Failed to send event: {:?}", error);
                 }
@@ -167,7 +167,7 @@ impl MainApp {
                 let current_music = &self.main_state.music_list.list[current_music_index];
                 self.main_state.title = current_music.title.clone();
             }
-            PlayerMessage::RandomToggled(flag) => {
+            ForegroundEvent::RandomToggled(flag) => {
                 self.config_data.is_random = flag;
 
                 if let Err(err) = self
@@ -184,7 +184,7 @@ impl MainApp {
         }
     }
 
-    pub fn view(&self) -> Element<PlayerMessage> {
+    pub fn view(&self) -> Element<ForegroundEvent> {
         let content = container(
             column!(
                 container(
@@ -234,14 +234,14 @@ impl MainApp {
         if self.show_setting_modal {
             let modal_view = self.setting_modal_view();
 
-            modal::create_modal(content, modal_view, PlayerMessage::CloseSettingModal)
+            modal::create_modal(content, modal_view, ForegroundEvent::CloseSettingModal)
         } else {
             content
         }
     }
 
-    pub fn subscription(&self) -> iced::Subscription<PlayerMessage> {
-        let tick = iced::time::every(Duration::from_millis(500)).map(PlayerMessage::Tick);
+    pub fn subscription(&self) -> iced::Subscription<ForegroundEvent> {
+        let tick = iced::time::every(Duration::from_millis(500)).map(ForegroundEvent::Tick);
 
         Subscription::batch(vec![tick])
     }
@@ -254,14 +254,14 @@ impl Default for MainApp {
 }
 
 impl MainApp {
-    pub fn setting_button(&self) -> Element<'static, PlayerMessage> {
+    pub fn setting_button(&self) -> Element<'static, ForegroundEvent> {
         let setting_button = button(
             text("setting")
                 .size(12)
                 .align_x(alignment::Horizontal::Right)
                 .align_y(alignment::Vertical::Center),
         )
-        .on_press(PlayerMessage::OpenSettingModal)
+        .on_press(ForegroundEvent::OpenSettingModal)
         .padding(3)
         .style(|_, _| {
             let mut style = iced::widget::button::Style::default();
@@ -275,7 +275,7 @@ impl MainApp {
         setting_button.into()
     }
 
-    fn items_list_view(&self) -> Element<'_, PlayerMessage> {
+    fn items_list_view(&self) -> Element<'_, ForegroundEvent> {
         let mut column = Column::new()
             .spacing(5)
             .align_x(iced::Alignment::Start)
@@ -292,13 +292,13 @@ impl MainApp {
         widget::scrollable(container(column)).width(300).into()
     }
 
-    fn button_view(&self) -> Element<'static, PlayerMessage> {
+    fn button_view(&self) -> Element<'static, ForegroundEvent> {
         let prev_button = button(
             text("<")
                 .align_x(alignment::Horizontal::Center)
                 .align_y(alignment::Vertical::Center),
         )
-        .on_press(PlayerMessage::PreviousPressed)
+        .on_press(ForegroundEvent::PreviousPressed)
         .padding(10)
         .width(Length::Fixed(50_f32))
         .height(Length::Fixed(50_f32));
@@ -308,7 +308,7 @@ impl MainApp {
                 .align_x(alignment::Horizontal::Center)
                 .align_y(alignment::Vertical::Center),
         )
-        .on_press(PlayerMessage::NextPressed)
+        .on_press(ForegroundEvent::NextPressed)
         .padding(10)
         .width(Length::Fixed(50_f32))
         .height(Length::Fixed(50_f32));
@@ -320,7 +320,7 @@ impl MainApp {
                 .align_x(alignment::Horizontal::Center)
                 .align_y(alignment::Vertical::Center),
         )
-        .on_press(PlayerMessage::ResumeOrPausePressed)
+        .on_press(ForegroundEvent::ResumeOrPausePressed)
         .padding(10)
         .width(Length::Fixed(50_f32))
         .height(Length::Fixed(50_f32));
@@ -349,10 +349,10 @@ impl MainApp {
 }
 
 impl MainApp {
-    fn setting_modal_view(&self) -> Element<'_, PlayerMessage> {
+    fn setting_modal_view(&self) -> Element<'_, ForegroundEvent> {
         let toggler = toggler(self.config_data.is_random)
             .label("Random Mode")
-            .on_toggle(PlayerMessage::RandomToggled)
+            .on_toggle(ForegroundEvent::RandomToggled)
             .spacing(15);
 
         let directory_path = self.config_data.directory_path.clone();
@@ -360,7 +360,7 @@ impl MainApp {
 
         let directory_text_input = text_input("Music Directory Path", directory_path_text)
             .id(TEXT_INPUT_ID.clone())
-            .on_input(PlayerMessage::MusicDirectoryInputChanged)
+            .on_input(ForegroundEvent::MusicDirectoryInputChanged)
             .padding(15)
             .size(13);
 
@@ -386,8 +386,8 @@ impl MainApp {
             })
             .size(9);
 
-        let choose_directory_button =
-            button(text("Choose Directory").size(12)).on_press(PlayerMessage::ChooseMusicDirectory);
+        let choose_directory_button = button(text("Choose Directory").size(12))
+            .on_press(ForegroundEvent::ChooseMusicDirectory);
 
         let content = container(
             column![
