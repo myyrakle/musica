@@ -155,10 +155,6 @@ impl MainApp {
                 self.update_music_list_from_config();
             }
             ForegroundEvent::Tick(_) => {
-                if let Err(error) = self.background_event_sender.send(BackgroundLoopEvent::Tick) {
-                    println!("Failed to send event: {:?}", error);
-                }
-
                 let current_music_index = self
                     .background_state
                     .current_music_index
