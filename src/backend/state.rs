@@ -9,7 +9,6 @@ pub enum BackgroundLoopEvent {
     Resume,
     Next,
     Previous,
-    Tick,
 }
 
 #[derive(Debug, Clone)]

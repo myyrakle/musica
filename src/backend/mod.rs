@@ -1,6 +1,6 @@
 pub mod state;
 
-use std::{fs::File, io::BufReader, sync::mpsc::Receiver, thread};
+use std::{fs::File, io::BufReader, sync::mpsc::Receiver, thread, time::Duration};
 
 use rodio::Decoder;
 use state::{BackgroundLoopEvent, BackgroundState};
@@ -57,7 +57,7 @@ pub fn background_loop(
         }
 
         loop {
-            if let Ok(event) = receiver.recv() {
+            if let Ok(event) = receiver.recv_timeout(Duration::from_millis(100)) {
                 match event {
                     BackgroundLoopEvent::Play => {
                         if music_list.is_not_empty() {
@@ -135,33 +135,35 @@ pub fn background_loop(
                             }
                         }
                     }
-                    BackgroundLoopEvent::Tick => {
-                        if sink.empty() {
-                            let mut index = background_state
-                                .current_index
-                                .load(std::sync::atomic::Ordering::Acquire);
+                }
+            }
 
-                            index += 1;
+            // Background Tick
+            {
+                if sink.empty() {
+                    let mut index = background_state
+                        .current_index
+                        .load(std::sync::atomic::Ordering::Acquire);
 
-                            if index >= music_list.list.len() {
-                                index = 0;
-                            }
+                    index += 1;
 
-                            background_state
-                                .current_index
-                                .store(index, std::sync::atomic::Ordering::Relaxed);
+                    if index >= music_list.list.len() {
+                        index = 0;
+                    }
 
-                            if music_list.is_not_empty() {
-                                if let Ok(source) = get_current_music_source(
-                                    &mut background_state,
-                                    &random_indices,
-                                    &music_list,
-                                ) {
-                                    sink.clear();
-                                    sink.play();
-                                    sink.append(source);
-                                }
-                            }
+                    background_state
+                        .current_index
+                        .store(index, std::sync::atomic::Ordering::Relaxed);
+
+                    if music_list.is_not_empty() {
+                        if let Ok(source) = get_current_music_source(
+                            &mut background_state,
+                            &random_indices,
+                            &music_list,
+                        ) {
+                            sink.clear();
+                            sink.play();
+                            sink.append(source);
                         }
                     }
                 }
