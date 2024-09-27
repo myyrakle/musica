@@ -43,10 +43,15 @@ pub fn background_loop(
     music_list: MusicList,
 ) {
     thread::spawn(move || {
+        // StartUp 이벤트가 들어올때까지 대기
+        loop {
+            if let Ok(BackgroundLoopEvent::StartUp) = receiver.recv() {
+                break;
+            }
+        }
+
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
         let sink = rodio::Sink::try_new(&handle).unwrap();
-
-        thread::sleep(std::time::Duration::from_millis(2000));
 
         // shuffled index list
         let mut random_indices = (0..music_list.list.len()).collect::<Vec<_>>();
@@ -135,6 +140,7 @@ pub fn background_loop(
                             }
                         }
                     }
+                    _ => {}
                 }
             }
 

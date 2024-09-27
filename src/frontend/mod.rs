@@ -24,6 +24,7 @@ pub struct MainApp {
 
     background_event_sender: Sender<BackgroundLoopEvent>,
     background_state: BackgroundState,
+    background_started: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -66,6 +67,7 @@ impl MainApp {
             show_setting_modal: false,
             background_state,
             background_event_sender: sender,
+            background_started: false,
         };
 
         app.update_music_list_from_config();
@@ -155,6 +157,15 @@ impl MainApp {
                 self.update_music_list_from_config();
             }
             ForegroundEvent::Tick(_) => {
+                // 백그라운드 루프 시작 트리거
+                if !self.background_started {
+                    self.background_event_sender
+                        .send(BackgroundLoopEvent::StartUp)
+                        .unwrap();
+
+                    self.background_started = true;
+                }
+
                 let current_music_index = self
                     .background_state
                     .current_music_index
