@@ -4,7 +4,6 @@ mod modal;
 use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc, LazyLock};
 use std::time::{Duration, Instant};
-use std::u8;
 
 use crate::backend::background_loop;
 use crate::backend::state::{BackgroundLoopEvent, BackgroundState};
@@ -212,14 +211,18 @@ impl MainApp {
                             .width(Length::Fill),
                     ),)
                     .style(|_: &Theme| {
-                        let mut style = container::Style::default();
-                        style.background =
-                            Some(iced::Background::Color(Color::from_rgb8(0x44, 0x47, 0x5a)));
-                        style.text_color = Some(Color::BLACK);
-                        style.border.width = 1.0;
-                        style.border.radius = 10.0.into();
-
-                        style
+                        container::Style {
+                            text_color: Some(Color::BLACK),
+                            border: iced::Border {
+                                width: 1.0,
+                                radius: 10.0.into(),
+                                ..Default::default()
+                            },
+                            background: Some(iced::Background::Color(Color::from_rgb8(
+                                0x44, 0x47, 0x5a,
+                            ))),
+                            ..Default::default()
+                        }
                     })
                     .padding(10),
                 )
@@ -270,13 +273,15 @@ impl MainApp {
         )
         .on_press(ForegroundEvent::OpenSettingModal)
         .padding(3)
-        .style(|_, _| {
-            let mut style = iced::widget::button::Style::default();
-            style.background = Some(iced::Background::Color(Color::from_rgba8(
+        .style(|_, _| iced::widget::button::Style {
+            background: Some(iced::Background::Color(Color::from_rgba8(
                 0xff, 0xff, 0xff, 0.5,
-            )));
-            style.border.radius = 10.0.into();
-            style
+            ))),
+            border: iced::Border {
+                radius: 10.0.into(),
+                ..Default::default()
+            },
+            ..Default::default()
         });
 
         setting_button.into()
@@ -371,7 +376,7 @@ impl MainApp {
             .padding(15)
             .size(13);
 
-        let directory_error_messasge = if directory_path_text != "" {
+        let directory_error_messasge = if !directory_path_text.is_empty() {
             if !directory_path.exists() {
                 "path is not exists"
             } else if !directory_path.is_dir() {
@@ -384,12 +389,8 @@ impl MainApp {
         };
 
         let directory_error_text = text(directory_error_messasge)
-            .style(|_| {
-                let mut style = text::Style::default();
-
-                style.color = Some(Color::from_rgb8(u8::MAX, 0, 0));
-
-                style
+            .style(|_| text::Style {
+                color: Some(Color::from_rgb8(u8::MAX, 0, 0)),
             })
             .size(9);
 

@@ -9,7 +9,7 @@ use crate::state::MusicList;
 
 fn get_current_music_source(
     background_state: &mut BackgroundState,
-    random_indices: &Vec<usize>,
+    random_indices: &[usize],
     music_list: &MusicList,
 ) -> anyhow::Result<Decoder<BufReader<File>>> {
     let mut index = background_state
