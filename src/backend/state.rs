@@ -4,6 +4,7 @@ use std::sync::{
 };
 
 pub enum BackgroundLoopEvent {
+    StartUp,
     Play,
     Pause,
     Resume,
