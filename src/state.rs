@@ -13,7 +13,7 @@ pub struct Music {
     pub file_path: PathBuf,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct MusicList {
     pub list: Vec<Music>,
 }
@@ -21,11 +21,5 @@ pub struct MusicList {
 impl MusicList {
     pub fn is_not_empty(&self) -> bool {
         !self.list.is_empty()
-    }
-}
-
-impl Default for MusicList {
-    fn default() -> Self {
-        Self { list: vec![] }
     }
 }
