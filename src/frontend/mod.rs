@@ -190,8 +190,12 @@ impl MainApp {
                     .store(flag, std::sync::atomic::Ordering::Relaxed);
             }
             ForegroundEvent::DirectPlayMusic(index) => {
-                // TODO
-                println!("DirectPlayMusic: {}", index);
+                if let Err(error) = self
+                    .background_event_sender
+                    .send(BackgroundLoopEvent::DirectPlayMusic(index))
+                {
+                    println!("Failed to send event: {:?}", error);
+                }
             }
         }
     }
