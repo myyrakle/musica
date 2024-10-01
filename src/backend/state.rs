@@ -10,6 +10,7 @@ pub enum BackgroundLoopEvent {
     Resume,
     Next,
     Previous,
+    DirectPlayMusic(usize),
 }
 
 #[derive(Debug, Clone)]

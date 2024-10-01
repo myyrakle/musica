@@ -32,6 +32,8 @@ pub enum ForegroundEvent {
     NextPressed,
     PreviousPressed,
 
+    DirectPlayMusic(usize),
+
     OpenSettingModal,
     CloseSettingModal,
     MusicDirectoryInputChanged(String),
@@ -187,6 +189,14 @@ impl MainApp {
                     .is_random_mode
                     .store(flag, std::sync::atomic::Ordering::Relaxed);
             }
+            ForegroundEvent::DirectPlayMusic(index) => {
+                if let Err(error) = self
+                    .background_event_sender
+                    .send(BackgroundLoopEvent::DirectPlayMusic(index))
+                {
+                    println!("Failed to send event: {:?}", error);
+                }
+            }
         }
     }
 
@@ -293,12 +303,31 @@ impl MainApp {
             .align_x(iced::Alignment::Start)
             .width(Length::Fill);
 
+        let mut i = 0;
+
         for value in self.main_state.music_list.list.iter() {
-            column = column.push(
-                text(value.title.as_str())
-                    .size(12)
-                    .shaping(advanced::text::Shaping::Advanced),
-            );
+            let text_widget = text(value.title.as_str())
+                .size(12)
+                .shaping(advanced::text::Shaping::Advanced)
+                .color(Color::WHITE);
+
+            let button_widget = button(text_widget)
+                .on_press_with(move || ForegroundEvent::DirectPlayMusic(i))
+                .padding(0)
+                .style(|_, _| iced::widget::button::Style {
+                    background: Some(iced::Background::Color(Color::from_rgba8(
+                        0x0, 0x0, 0x0, 0.,
+                    ))),
+                    border: iced::Border {
+                        radius: 0.0.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });
+
+            column = column.push(button_widget);
+
+            i += 1;
         }
 
         widget::scrollable(container(column)).width(300).into()
