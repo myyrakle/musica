@@ -5,7 +5,7 @@ use std::{fs::File, io::BufReader, sync::mpsc::Receiver, thread, time::Duration}
 use rodio::Decoder;
 use state::{BackgroundLoopEvent, BackgroundState};
 
-use crate::state::MusicList;
+use crate::state::{Music, MusicList};
 
 fn get_current_music_source(
     background_state: &mut BackgroundState,
@@ -28,9 +28,15 @@ fn get_current_music_source(
         .store(index, std::sync::atomic::Ordering::Release);
 
     let current_music = music_list.list[index].clone();
-    let file = std::fs::File::open(&current_music.file_path)?;
+    let source = get_source_from_music(&current_music)?;
+
+    Ok(source)
+}
+
+fn get_source_from_music(music: &Music) -> anyhow::Result<Decoder<BufReader<File>>> {
+    let file = std::fs::File::open(&music.file_path)?;
     let buffer = std::io::BufReader::new(file);
-    println!("file: {:?}", current_music.file_path);
+    println!("file: {:?}", music.file_path);
 
     let source = rodio::Decoder::new(buffer)?;
 
@@ -134,6 +140,21 @@ pub fn background_loop(
                                 &random_indices,
                                 &music_list,
                             ) {
+                                sink.clear();
+                                sink.play();
+                                sink.append(source);
+                            }
+                        }
+                    }
+                    BackgroundLoopEvent::DirectPlayMusic(index) => {
+                        background_state
+                            .current_music_index
+                            .store(index, std::sync::atomic::Ordering::Relaxed);
+
+                        if music_list.is_not_empty() {
+                            let music = music_list.list[index].clone();
+
+                            if let Ok(source) = get_source_from_music(&music) {
                                 sink.clear();
                                 sink.play();
                                 sink.append(source);
