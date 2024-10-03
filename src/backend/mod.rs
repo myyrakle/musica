@@ -1,7 +1,10 @@
+pub mod hotkey;
 pub mod state;
 
 use std::{fs::File, io::BufReader, sync::mpsc::Receiver, thread, time::Duration};
 
+use global_hotkey::GlobalHotKeyEvent;
+use hotkey::register_hotkey;
 use rodio::Decoder;
 use state::{BackgroundLoopEvent, BackgroundState};
 
@@ -48,6 +51,7 @@ pub fn background_loop(
     mut background_state: BackgroundState,
     music_list: MusicList,
 ) {
+    // iced-rs sent event loop
     thread::spawn(move || {
         // StartUp 이벤트가 들어올때까지 대기
         loop {
@@ -197,4 +201,25 @@ pub fn background_loop(
             }
         }
     });
+
+    // hotkey event loop
+    match register_hotkey() {
+        Ok(manager) => {
+            println!("Hotkey registered");
+
+            thread::spawn(move || {
+                let _ = manager;
+
+                let receiver = GlobalHotKeyEvent::receiver();
+                loop {
+                    if let Ok(event) = receiver.recv() {
+                        println!("{:?}", event);
+                    }
+                }
+            });
+        }
+        Err(error) => {
+            eprintln!("Failed to register hotkey: {:?}", error);
+        }
+    }
 }

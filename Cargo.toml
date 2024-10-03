@@ -13,6 +13,7 @@ homepage = "https://github.com/myyrakle/musica/blob/master/README.md"
 
 [dependencies]
 anyhow = "1.0.88"
+global-hotkey = "0.6.2"
 iced = { version="0.13.1", features = ["advanced", "tokio"]}
 native-dialog = "0.7.0"
 rand = "0.8.5"
