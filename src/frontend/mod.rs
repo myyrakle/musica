@@ -313,17 +313,19 @@ impl MainApp {
 
             let button_widget = button(text_widget)
                 .on_press_with(move || ForegroundEvent::DirectPlayMusic(i))
-                .padding(0)
+                .padding(5)
                 .style(|_, _| iced::widget::button::Style {
                     background: Some(iced::Background::Color(Color::from_rgba8(
-                        0x0, 0x0, 0x0, 0.,
+                        0x0, 0x0, 0x0, 0.5,
                     ))),
                     border: iced::Border {
                         radius: 0.0.into(),
+                        width: 0.1,
                         ..Default::default()
                     },
                     ..Default::default()
-                });
+                })
+                .width(Length::Fill);
 
             column = column.push(button_widget);
 
