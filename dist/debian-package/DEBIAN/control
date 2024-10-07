@@ -1,0 +1,8 @@
+Package: musica
+Version: 0.3
+Section: base
+Priority: optional
+Architecture: amd64
+Depends: libc6 (>= 2.29)
+Maintainer: myyrakle <sssang97@naver.com>
+Description: Simple music player

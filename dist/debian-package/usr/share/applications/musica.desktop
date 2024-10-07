@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=0.3
+Name=Musica
+Comment=My Music Application
+Exec=/usr/local/bin/musica
+Icon=/usr/share/pixmaps/musica-256x256.png
+Terminal=false
+Type=Application
+Categories=AudioVideo;Player;
+StartupWMClass=musica
