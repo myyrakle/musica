@@ -195,6 +195,30 @@ impl MainApp {
                     .store(flag, std::sync::atomic::Ordering::Relaxed);
             }
             ForegroundEvent::DirectPlayMusic(index) => {
+                // detect double click event
+                let now = Instant::now();
+
+                let (last_click_time, last_click_index) = self.direct_play_music_clicked;
+
+                self.direct_play_music_clicked = (now, index);
+
+                // deny double click event
+                if now.duration_since(last_click_time) > Duration::from_millis(500)
+                    || last_click_index != index
+                {
+                    return;
+                }
+
+                // allow double click event
+                println!("double click detected");
+
+                self.direct_play_music_clicked = (
+                    Instant::now()
+                        .checked_sub(Duration::from_secs(10))
+                        .unwrap_or(Instant::now()),
+                    0,
+                );
+
                 if let Err(error) = self
                     .background_event_sender
                     .send(BackgroundLoopEvent::DirectPlayMusic(index))
