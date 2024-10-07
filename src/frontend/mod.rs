@@ -21,6 +21,10 @@ pub struct MainApp {
     config_data: Config,
     show_setting_modal: bool,
 
+    // millisecond timestamp integer
+    // for detect double click event
+    direct_play_music_clicked: (Instant, usize),
+
     background_event_sender: Sender<BackgroundLoopEvent>,
     background_state: BackgroundState,
     background_started: bool,
@@ -69,6 +73,7 @@ impl MainApp {
             background_state,
             background_event_sender: sender,
             background_started: false,
+            direct_play_music_clicked: (Instant::now(), 0),
         };
 
         app.update_music_list_from_config();
