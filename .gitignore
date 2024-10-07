@@ -25,3 +25,4 @@ Cargo.lock
 /target
 
 *.deb
+dist/debian-package/usr/local/bin/musica
