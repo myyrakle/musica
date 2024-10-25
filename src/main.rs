@@ -14,8 +14,13 @@ fn main() -> iced::Result {
     let mut setting = Settings::default();
     setting.id = Some("musica".into());
 
+    #[allow(unused_mut)]
     let mut window_setting = iced::window::Settings::default();
-    window_setting.platform_specific.application_id = "musica".into();
+
+    #[cfg(target_os = "linux")]
+    {
+        window_setting.platform_specific.application_id = "musica".into();
+    }
 
     iced::application("musica", MainApp::update, MainApp::view)
         .settings(setting)
