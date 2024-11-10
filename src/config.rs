@@ -21,10 +21,13 @@ impl Config {
 }
 
 fn get_app_data_path() -> PathBuf {
-    let home_dir = env::var("HOME").unwrap_or_else(|_| String::from(""));
-
+    // ------- Windows Only
     #[cfg(target_os = "windows")]
-    let app_data_path = PathBuf::from(format!(r"{}\AppData\Local\musica", home_dir));
+    let app_data_path = PathBuf::from(r"\AppData\Local\musica");
+    // Windows Only -------
+
+    #[cfg(not(any(target_os = "windows")))]
+    let home_dir = env::var("HOME").unwrap_or_else(|_| String::from(""));
 
     #[cfg(target_os = "macos")]
     let app_data_path = PathBuf::from(format!("{}/Library/Application Support/musica", home_dir));
