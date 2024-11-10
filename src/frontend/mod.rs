@@ -177,6 +177,10 @@ impl MainApp {
                     .current_music_index
                     .load(std::sync::atomic::Ordering::Acquire);
 
+                if self.main_state.music_list.list.is_empty() {
+                    return;
+                }
+
                 let current_music = &self.main_state.music_list.list[current_music_index];
                 self.main_state.title = current_music.title.clone();
             }
