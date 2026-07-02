@@ -1,6 +1,6 @@
 pub mod state;
 
-use std::{fs::File, io::BufReader, sync::mpsc::Receiver, thread, time::Duration};
+use std::{fs::File, sync::mpsc::Receiver, thread, time::Duration};
 
 use rodio::Decoder;
 use state::{BackgroundLoopEvent, BackgroundState};
@@ -11,7 +11,7 @@ fn get_current_music_source(
     background_state: &mut BackgroundState,
     random_indices: &[usize],
     music_list: &MusicList,
-) -> anyhow::Result<Decoder<BufReader<File>>> {
+) -> anyhow::Result<Decoder<std::io::BufReader<File>>> {
     let mut index = background_state
         .current_index
         .load(std::sync::atomic::Ordering::Acquire);
@@ -33,12 +33,11 @@ fn get_current_music_source(
     Ok(source)
 }
 
-fn get_source_from_music(music: &Music) -> anyhow::Result<Decoder<BufReader<File>>> {
+fn get_source_from_music(music: &Music) -> anyhow::Result<Decoder<std::io::BufReader<File>>> {
     let file = std::fs::File::open(&music.file_path)?;
-    let buffer = std::io::BufReader::new(file);
     println!("file: {:?}", music.file_path);
 
-    let source = rodio::Decoder::new(buffer)?;
+    let source = rodio::Decoder::try_from(file)?;
 
     Ok(source)
 }
@@ -56,15 +55,15 @@ pub fn background_loop(
             }
         }
 
-        let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-        let sink = rodio::Sink::try_new(&handle).unwrap();
+        let _stream = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
+        let sink = rodio::Player::connect_new(&_stream.mixer());
 
         // shuffled index list
         let mut random_indices = (0..music_list.list.len()).collect::<Vec<_>>();
 
         {
             use rand::seq::SliceRandom;
-            random_indices.shuffle(&mut rand::thread_rng());
+            random_indices.shuffle(&mut rand::rng());
         }
 
         loop {

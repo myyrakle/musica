@@ -14,7 +14,7 @@ use iced::{advanced, alignment, Color, Element, Length, Subscription, Theme};
 
 use crate::{config, file};
 
-static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
+static TEXT_INPUT_ID: LazyLock<widget::Id> = LazyLock::new(widget::Id::unique);
 
 pub struct MainApp {
     main_state: MainState,
@@ -233,7 +233,7 @@ impl MainApp {
         }
     }
 
-    pub fn view(&self) -> Element<ForegroundEvent> {
+    pub fn view(&self) -> Element<'_, ForegroundEvent> {
         let content = container(
             column!(
                 container(

@@ -22,7 +22,8 @@ fn main() -> iced::Result {
         window_setting.platform_specific.application_id = "musica".into();
     }
 
-    iced::application("musica", MainApp::update, MainApp::view)
+    iced::application(MainApp::default, MainApp::update, MainApp::view)
+        .title("musica")
         .settings(setting)
         .window(window_setting)
         .resizable(false)
