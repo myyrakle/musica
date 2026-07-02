@@ -11,8 +11,10 @@ fn main() -> iced::Result {
     let config_path = config::get_config_path();
     config::create_config_if_not_exists(config_path).unwrap();
 
-    let mut setting = Settings::default();
-    setting.id = Some("musica".into());
+    let setting = Settings {
+        id: Some("musica".into()),
+        ..Default::default()
+    };
 
     #[allow(unused_mut)]
     let mut window_setting = iced::window::Settings::default();
