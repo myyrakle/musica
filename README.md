@@ -4,7 +4,7 @@
 
 simple music player
 
-![image](https://github.com/user-attachments/assets/72590ec7-08a4-4643-bbd5-beb79f35a681)
+<img width="315" height="665" alt="image" src="https://github.com/user-attachments/assets/51473c18-fa8c-4317-81f8-c2e82423c723" />
 
 ## Install
 
