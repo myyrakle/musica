@@ -1,6 +1,6 @@
 use std::sync::{
-    atomic::{AtomicBool, AtomicUsize},
     Arc,
+    atomic::{AtomicBool, AtomicUsize},
 };
 
 pub enum BackgroundLoopEvent {
@@ -10,6 +10,7 @@ pub enum BackgroundLoopEvent {
     Next,
     Previous,
     DirectPlayMusic(usize),
+    VolumeChanged(f32),
 }
 
 #[derive(Debug, Clone)]
