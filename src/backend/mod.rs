@@ -46,6 +46,7 @@ pub fn background_loop(
     receiver: Receiver<BackgroundLoopEvent>,
     mut background_state: BackgroundState,
     music_list: MusicList,
+    initial_volume: f32,
 ) {
     thread::spawn(move || {
         // StartUp 이벤트가 들어올때까지 대기
@@ -58,6 +59,7 @@ pub fn background_loop(
         let _stream = rodio::DeviceSinkBuilder::open_default_sink()
             .expect("Failed to open default audio output device");
         let sink = rodio::Player::connect_new(_stream.mixer());
+        sink.set_volume(initial_volume);
 
         // shuffled index list
         let mut random_indices = (0..music_list.list.len()).collect::<Vec<_>>();
@@ -193,6 +195,9 @@ pub fn background_loop(
                                 .is_paused
                                 .store(false, std::sync::atomic::Ordering::Relaxed);
                         }
+                    }
+                    BackgroundLoopEvent::VolumeChanged(volume) => {
+                        sink.set_volume(volume);
                     }
                     _ => {}
                 }

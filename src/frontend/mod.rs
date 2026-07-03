@@ -2,15 +2,15 @@ mod dialog;
 mod modal;
 
 use std::sync::mpsc::Sender;
-use std::sync::{mpsc, Arc, LazyLock};
+use std::sync::{Arc, LazyLock, mpsc};
 use std::time::{Duration, Instant};
 
 use crate::backend::background_loop;
 use crate::backend::state::{BackgroundLoopEvent, BackgroundState};
 use crate::state::{MainState, Music, MusicList};
 use config::Config;
-use iced::widget::{self, button, column, container, text, text_input, toggler, Column};
-use iced::{advanced, alignment, Color, Element, Length, Subscription, Theme};
+use iced::widget::{self, Column, button, column, container, text, text_input, toggler};
+use iced::{Color, Element, Length, Subscription, Theme, advanced, alignment};
 
 use crate::{config, file};
 
@@ -39,6 +39,7 @@ pub enum ForegroundEvent {
     ChooseMusicDirectory,
 
     RandomToggled(bool),
+    VolumeChanged(f32),
 
     #[allow(dead_code)]
     Tick(Instant),
@@ -72,9 +73,16 @@ impl MainApp {
 
         app.update_music_list_from_config();
 
+        app.config_data.volume = Config::normalize_volume(app.config_data.volume);
+
         let music_list = app.main_state.music_list.clone();
 
-        background_loop(receiver, app.background_state.clone(), music_list);
+        background_loop(
+            receiver,
+            app.background_state.clone(),
+            music_list,
+            app.config_data.volume,
+        );
 
         // 백그라운드 스레드가 OutputStream/Sink를 생성한 뒤 첫 곡을 자동 재생하도록 트리거
         app.background_event_sender
@@ -191,6 +199,24 @@ impl MainApp {
                     .is_random_mode
                     .store(flag, std::sync::atomic::Ordering::Relaxed);
             }
+            ForegroundEvent::VolumeChanged(volume) => {
+                let volume = Config::normalize_volume(volume);
+                self.config_data.volume = volume;
+
+                if let Err(err) = self
+                    .config_data
+                    .update_config_if_exists(config::get_config_path())
+                {
+                    println!("Failed to update config: {:?}", err);
+                }
+
+                if let Err(error) = self
+                    .background_event_sender
+                    .send(BackgroundLoopEvent::VolumeChanged(volume))
+                {
+                    println!("Failed to send event: {:?}", error);
+                }
+            }
             ForegroundEvent::DirectPlayMusic(index) => {
                 if let Err(error) = self
                     .background_event_sender
@@ -221,6 +247,10 @@ impl MainApp {
                             .padding(5)
                             .align_x(alignment::Horizontal::Center)
                             .width(Length::Fill),
+                        container(self.volume_view())
+                            .padding(5)
+                            .align_x(alignment::Horizontal::Center)
+                            .width(Length::Fill),
                     ),)
                     .style(|_: &Theme| {
                         container::Style {
@@ -239,7 +269,7 @@ impl MainApp {
                     .padding(10),
                 )
                 .width(Length::Fill)
-                .height(Length::Fixed(160_f32))
+                .height(Length::Fixed(195_f32))
                 .padding(10),
                 container(self.items_list_view())
                     .height(Length::Fill)
@@ -369,6 +399,27 @@ impl MainApp {
         widget::row!(prev_button, resume_or_pause_button, next_button,)
             .spacing(10)
             .into()
+    }
+
+    fn volume_view(&self) -> Element<'_, ForegroundEvent> {
+        let volume_percent = (self.config_data.volume * 100.0).round() as u8;
+
+        widget::row![
+            text("Volume").size(12),
+            widget::slider(
+                0.0..=1.0,
+                self.config_data.volume,
+                ForegroundEvent::VolumeChanged,
+            )
+            .step(0.01),
+            text(format!("{volume_percent}%"))
+                .size(12)
+                .width(Length::Fixed(36.0)),
+        ]
+        .spacing(8)
+        .align_y(iced::Alignment::Center)
+        .width(Length::Fill)
+        .into()
     }
 }
 
