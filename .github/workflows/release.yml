@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.asset_name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: musica-linux-x86_64
+            archive_name: musica-linux-x86_64.tar.gz
+          - os: windows-latest
+            asset_name: musica-windows-x86_64
+            archive_name: musica-windows-x86_64.zip
+          - os: macos-15-intel
+            asset_name: musica-macos-x86_64
+            archive_name: musica-macos-x86_64.tar.gz
+          - os: macos-latest
+            asset_name: musica-macos-aarch64
+            archive_name: musica-macos-aarch64.tar.gz
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        run: |
+          rustup update stable
+          rustup default stable
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev pkg-config
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Package Linux and macOS binary
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist
+          cp target/release/musica-app dist/musica
+          tar -C dist -czf "${{ matrix.archive_name }}" musica
+
+      - name: Package Windows binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item target\release\musica-app.exe dist\musica.exe
+          Compress-Archive -Path dist\musica.exe -DestinationPath "${{ matrix.archive_name }}" -Force
+
+      - name: Upload release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" "${{ matrix.archive_name }}" --clobber
