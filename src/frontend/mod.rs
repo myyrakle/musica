@@ -14,20 +14,15 @@ use iced::{advanced, alignment, Color, Element, Length, Subscription, Theme};
 
 use crate::{config, file};
 
-static TEXT_INPUT_ID: LazyLock<text_input::Id> = LazyLock::new(text_input::Id::unique);
+static TEXT_INPUT_ID: LazyLock<widget::Id> = LazyLock::new(widget::Id::unique);
 
 pub struct MainApp {
     main_state: MainState,
     config_data: Config,
     show_setting_modal: bool,
 
-    // millisecond timestamp integer
-    // for detect double click event
-    direct_play_music_clicked: (Instant, usize),
-
     background_event_sender: Sender<BackgroundLoopEvent>,
     background_state: BackgroundState,
-    background_started: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -60,6 +55,7 @@ impl MainApp {
             current_music_index: Default::default(),
             current_index: Default::default(),
             is_random_mode: Arc::new(config_data.is_random.into()),
+            is_paused: Arc::new(false.into()),
         };
 
         let mut app = Self {
@@ -72,19 +68,18 @@ impl MainApp {
             show_setting_modal: false,
             background_state,
             background_event_sender: sender,
-            background_started: false,
-            direct_play_music_clicked: (Instant::now(), 0),
         };
 
         app.update_music_list_from_config();
 
-        app.background_event_sender
-            .send(BackgroundLoopEvent::Play)
-            .unwrap();
-
         let music_list = app.main_state.music_list.clone();
 
         background_loop(receiver, app.background_state.clone(), music_list);
+
+        // 백그라운드 스레드가 OutputStream/Sink를 생성한 뒤 첫 곡을 자동 재생하도록 트리거
+        app.background_event_sender
+            .send(BackgroundLoopEvent::StartUp)
+            .unwrap();
 
         app
     }
@@ -163,14 +158,12 @@ impl MainApp {
                 self.update_music_list_from_config();
             }
             ForegroundEvent::Tick(_) => {
-                // 백그라운드 루프 시작 트리거
-                if !self.background_started {
-                    self.background_event_sender
-                        .send(BackgroundLoopEvent::StartUp)
-                        .unwrap();
-
-                    self.background_started = true;
-                }
+                // 백엔드의 실제 일시정지 상태를 프론트엔드 on_play와 동기화
+                let is_paused = self
+                    .background_state
+                    .is_paused
+                    .load(std::sync::atomic::Ordering::Acquire);
+                self.main_state.on_play = !is_paused;
 
                 let current_music_index = self
                     .background_state
@@ -199,30 +192,6 @@ impl MainApp {
                     .store(flag, std::sync::atomic::Ordering::Relaxed);
             }
             ForegroundEvent::DirectPlayMusic(index) => {
-                // detect double click event
-                let now = Instant::now();
-
-                let (last_click_time, last_click_index) = self.direct_play_music_clicked;
-
-                self.direct_play_music_clicked = (now, index);
-
-                // deny double click event
-                if now.duration_since(last_click_time) > Duration::from_millis(500)
-                    || last_click_index != index
-                {
-                    return;
-                }
-
-                // allow double click event
-                println!("double click detected");
-
-                self.direct_play_music_clicked = (
-                    Instant::now()
-                        .checked_sub(Duration::from_secs(10))
-                        .unwrap_or(Instant::now()),
-                    0,
-                );
-
                 if let Err(error) = self
                     .background_event_sender
                     .send(BackgroundLoopEvent::DirectPlayMusic(index))
@@ -233,7 +202,7 @@ impl MainApp {
         }
     }
 
-    pub fn view(&self) -> Element<ForegroundEvent> {
+    pub fn view(&self) -> Element<'_, ForegroundEvent> {
         let content = container(
             column!(
                 container(
@@ -336,9 +305,7 @@ impl MainApp {
             .align_x(iced::Alignment::Start)
             .width(Length::Fill);
 
-        let mut i = 0;
-
-        for value in self.main_state.music_list.list.iter() {
+        for (i, value) in self.main_state.music_list.list.iter().enumerate() {
             let text_widget = text(value.title.as_str())
                 .size(12)
                 .shaping(advanced::text::Shaping::Advanced)
@@ -361,8 +328,6 @@ impl MainApp {
                 .width(Length::Fill);
 
             column = column.push(button_widget);
-
-            i += 1;
         }
 
         widget::scrollable(container(column)).width(300).into()

@@ -1,9 +1,11 @@
 use std::path::PathBuf;
 
-use native_dialog::FileDialog;
+use native_dialog::DialogBuilder;
 
 pub fn open_directory_dialog() -> anyhow::Result<PathBuf> {
-    let path = FileDialog::new().show_open_single_dir()?;
+    let path = DialogBuilder::file()
+        .open_single_dir()
+        .show()?;
 
     let path = match path {
         Some(path) => path,

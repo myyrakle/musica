@@ -6,7 +6,7 @@ simple music player
 
 ![image](https://github.com/user-attachments/assets/72590ec7-08a4-4643-bbd5-beb79f35a681)
 
-## Install 
+## Install
 
 ```bash
 cargo install musica-app
@@ -15,11 +15,10 @@ musica-app
 
 or Download directly from the release page
 
-
 ## Denpendencies
 
 - Linux (Ubuntu)
+
 ```
 sudo apt install libasound2-dev
 ```
-

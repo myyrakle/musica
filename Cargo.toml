@@ -1,21 +1,21 @@
 [package]
 name = "musica-app"
 version = "0.2.1"
-edition = "2021"
+edition = "2024"
 license = "MIT"
-authors = ["myyrakle <sssang97@naver.com>"] 
-description = "simple music player" 
-keywords = ["music", "player", "mp3", "ogg"] 
+authors = ["myyrakle <sssang97@naver.com>"]
+description = "simple music player"
+keywords = ["music", "player", "mp3", "ogg"]
 readme = "README.md"
-repository = "https://github.com/myyrakle/musica" 
-documentation = "https://docs.rs/musica/latest/musica" 
-homepage = "https://github.com/myyrakle/musica/blob/master/README.md" 
+repository = "https://github.com/myyrakle/musica"
+documentation = "https://docs.rs/musica/latest/musica"
+homepage = "https://github.com/myyrakle/musica/blob/master/README.md"
 
 [dependencies]
-anyhow = "1.0.88"
-iced = { version="0.13.1", features = ["advanced", "tokio"]}
-native-dialog = "0.7.0"
-rand = "0.8.5"
-rodio = "0.19.0"
+anyhow = "1"
+iced = { version = "0.14", features = ["advanced", "tokio"] }
+native-dialog = "0.9"
+rand = "0.10"
+rodio = "0.22"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

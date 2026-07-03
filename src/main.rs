@@ -11,8 +11,10 @@ fn main() -> iced::Result {
     let config_path = config::get_config_path();
     config::create_config_if_not_exists(config_path).unwrap();
 
-    let mut setting = Settings::default();
-    setting.id = Some("musica".into());
+    let setting = Settings {
+        id: Some("musica".into()),
+        ..Default::default()
+    };
 
     #[allow(unused_mut)]
     let mut window_setting = iced::window::Settings::default();
@@ -22,7 +24,8 @@ fn main() -> iced::Result {
         window_setting.platform_specific.application_id = "musica".into();
     }
 
-    iced::application("musica", MainApp::update, MainApp::view)
+    iced::application(MainApp::default, MainApp::update, MainApp::view)
+        .title("musica")
         .settings(setting)
         .window(window_setting)
         .resizable(false)
