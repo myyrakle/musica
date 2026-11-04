@@ -72,6 +72,40 @@ fn replace_player(
     *start_offset = Duration::ZERO;
 }
 
+// 곡의 전체 길이를 프론트엔드에 공유하고 재생 위치를 0으로 초기화한다.
+fn reset_track_info(
+    background_state: &BackgroundState,
+    source: &Decoder<std::io::BufReader<File>>,
+) {
+    let total_millis = source
+        .total_duration()
+        .map(|duration| duration.as_millis() as u64)
+        .unwrap_or(0);
+
+    background_state
+        .total_duration_millis
+        .store(total_millis, std::sync::atomic::Ordering::Relaxed);
+    background_state
+        .position_millis
+        .store(0, std::sync::atomic::Ordering::Relaxed);
+}
+
+// 새 곡을 재생한다. 곡 정보도 함께 갱신한다.
+fn start_playback(
+    sink: &mut Player,
+    start_offset: &mut Duration,
+    stream: &MixerDeviceSink,
+    source: Decoder<std::io::BufReader<File>>,
+    background_state: &BackgroundState,
+) {
+    reset_track_info(background_state, &source);
+    replace_player(sink, start_offset, stream, source);
+
+    background_state
+        .is_paused
+        .store(false, std::sync::atomic::Ordering::Relaxed);
+}
+
 fn shuffled_indices(len: usize) -> Vec<usize> {
     use rand::seq::SliceRandom;
 
@@ -148,6 +182,7 @@ pub fn background_loop(
             && let Ok(source) =
                 get_current_music_source(&mut background_state, &random_indices, &music_list)
         {
+            reset_track_info(&background_state, &source);
             sink.play();
             sink.append(source);
         }
@@ -193,10 +228,13 @@ pub fn background_loop(
                                 &music_list,
                             )
                         {
-                            replace_player(&mut sink, &mut start_offset, &stream, source);
-                            background_state
-                                .is_paused
-                                .store(false, std::sync::atomic::Ordering::Relaxed);
+                            start_playback(
+                                &mut sink,
+                                &mut start_offset,
+                                &stream,
+                                source,
+                                &background_state,
+                            );
                         }
                     }
                     BackgroundLoopEvent::Previous => {
@@ -225,10 +263,13 @@ pub fn background_loop(
                                 &music_list,
                             )
                         {
-                            replace_player(&mut sink, &mut start_offset, &stream, source);
-                            background_state
-                                .is_paused
-                                .store(false, std::sync::atomic::Ordering::Relaxed);
+                            start_playback(
+                                &mut sink,
+                                &mut start_offset,
+                                &stream,
+                                source,
+                                &background_state,
+                            );
                         }
                     }
                     BackgroundLoopEvent::DirectPlayMusic(index) => {
@@ -262,10 +303,13 @@ pub fn background_loop(
                         let music = music_list.list[index].clone();
 
                         if let Ok(source) = get_source_from_music(&music) {
-                            replace_player(&mut sink, &mut start_offset, &stream, source);
-                            background_state
-                                .is_paused
-                                .store(false, std::sync::atomic::Ordering::Relaxed);
+                            start_playback(
+                                &mut sink,
+                                &mut start_offset,
+                                &stream,
+                                source,
+                                &background_state,
+                            );
                         }
                     }
                     BackgroundLoopEvent::VolumeChanged(volume) => {
@@ -286,6 +330,12 @@ pub fn background_loop(
                         // 이전 목록의 곡 재생을 멈춘다. 새 목록이 비어 있으면 그대로 정지 상태가 된다.
                         sink = new_player_like(&sink, &stream);
                         start_offset = Duration::ZERO;
+                        background_state
+                            .total_duration_millis
+                            .store(0, std::sync::atomic::Ordering::Relaxed);
+                        background_state
+                            .position_millis
+                            .store(0, std::sync::atomic::Ordering::Relaxed);
 
                         if music_list.is_not_empty()
                             && let Ok(source) = get_current_music_source(
@@ -294,10 +344,55 @@ pub fn background_loop(
                                 &music_list,
                             )
                         {
+                            reset_track_info(&background_state, &source);
                             sink.append(source);
                             background_state
                                 .is_paused
                                 .store(false, std::sync::atomic::Ordering::Relaxed);
+                        }
+                    }
+                    BackgroundLoopEvent::Seek(position) => {
+                        if sink.empty() {
+                            continue;
+                        }
+
+                        let index = background_state
+                            .current_music_index
+                            .load(std::sync::atomic::Ordering::Acquire);
+
+                        // Player::try_seek()는 오디오 스레드 응답을 타임아웃 없이 기다리므로
+                        // (스트림이 죽어 있으면 루프 전체가 멈춤) 곡을 다시 열어 해당 위치부터 재생한다.
+                        let Some(music) = music_list.list.get(index) else {
+                            continue;
+                        };
+
+                        match get_source_from_music(music) {
+                            Ok(mut source) => {
+                                if let Err(error) = source.try_seek(position) {
+                                    println!("Failed to seek: {:?}", error);
+                                    continue;
+                                }
+
+                                let player = new_player_like(&sink, &stream);
+
+                                // 일시정지 중이면 위치만 옮기고 일시정지 상태를 유지한다
+                                if sink.is_paused() {
+                                    player.pause();
+                                }
+
+                                player.append(source);
+                                sink = player;
+                                start_offset = position;
+
+                                background_state.position_millis.store(
+                                    position.as_millis() as u64,
+                                    std::sync::atomic::Ordering::Relaxed,
+                                );
+                                stall_detector = StallDetector::new(Instant::now());
+                            }
+                            Err(error) => {
+                                println!("Failed to seek: {:?}", error);
+                            }
                         }
                     }
                     _ => {}
@@ -346,6 +441,12 @@ pub fn background_loop(
                     stall_detector = StallDetector::new(Instant::now());
                 }
 
+                // 현재 재생 위치를 프론트엔드에 공유
+                background_state.position_millis.store(
+                    (start_offset + sink.get_pos()).as_millis() as u64,
+                    std::sync::atomic::Ordering::Relaxed,
+                );
+
                 // 일시정지 중에는 자동 다음 곡 재생을 하지 않는다.
                 // (일시정지 상태에서 sink가 비었다고 해서 임의로 다음 곡을 재생하면
                 //  사용자가 일시정지했음에도 재생이 시작되는 버그가 발생함)
@@ -371,10 +472,13 @@ pub fn background_loop(
                             &music_list,
                         )
                     {
-                        replace_player(&mut sink, &mut start_offset, &stream, source);
-                        background_state
-                            .is_paused
-                            .store(false, std::sync::atomic::Ordering::Relaxed);
+                        start_playback(
+                            &mut sink,
+                            &mut start_offset,
+                            &stream,
+                            source,
+                            &background_state,
+                        );
                     }
                 }
             }
