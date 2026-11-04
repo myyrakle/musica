@@ -150,7 +150,7 @@ impl MainApp {
                         println!("Failed to update config: {:?}", err);
                     }
 
-                    self.update_music_list_from_config();
+                    self.refresh_music_list();
                 }
             }
             ForegroundEvent::MusicDirectoryInputChanged(text) => {
@@ -163,7 +163,7 @@ impl MainApp {
                     println!("Failed to update config: {:?}", err);
                 }
 
-                self.update_music_list_from_config();
+                self.refresh_music_list();
             }
             ForegroundEvent::Tick(_) => {
                 // 백엔드의 실제 일시정지 상태를 프론트엔드 on_play와 동기화
@@ -179,11 +179,16 @@ impl MainApp {
                     .load(std::sync::atomic::Ordering::Acquire);
 
                 if self.main_state.music_list.list.is_empty() {
+                    self.main_state.title = "no music".into();
                     return;
                 }
 
-                let current_music = &self.main_state.music_list.list[current_music_index];
-                self.main_state.title = current_music.title.clone();
+                // 목록이 바뀐 직후에는 백그라운드가 아직 이전 목록 기준의 인덱스를 가지고 있을 수 있다.
+                if let Some(current_music) =
+                    self.main_state.music_list.list.get(current_music_index)
+                {
+                    self.main_state.title = current_music.title.clone();
+                }
             }
             ForegroundEvent::RandomToggled(flag) => {
                 self.config_data.is_random = flag;
@@ -436,6 +441,23 @@ impl MainApp {
                     file_path: x.filepath.clone(),
                 })
                 .collect();
+        }
+    }
+
+    // 곡 목록이 바뀌면 백그라운드 루프에도 전달해 같은 목록을 기준으로 재생하도록 한다.
+    fn refresh_music_list(&mut self) {
+        let previous_music_list = self.main_state.music_list.clone();
+
+        self.update_music_list_from_config();
+
+        if self.main_state.music_list != previous_music_list
+            && let Err(error) =
+                self.background_event_sender
+                    .send(BackgroundLoopEvent::MusicListChanged(
+                        self.main_state.music_list.clone(),
+                    ))
+        {
+            println!("Failed to send event: {:?}", error);
         }
     }
 }

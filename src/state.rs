@@ -7,13 +7,13 @@ pub struct MainState {
     pub on_play: bool,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct Music {
     pub title: String,
     pub file_path: PathBuf,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct MusicList {
     pub list: Vec<Music>,
 }
