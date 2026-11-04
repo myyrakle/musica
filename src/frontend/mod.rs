@@ -294,23 +294,29 @@ impl MainApp {
                 container(
                     container(column!(
                         container(self.setting_button()).padding(0),
-                        container(self.title_view())
-                            .padding(10)
-                            .align_x(alignment::Horizontal::Center)
-                            .width(Length::Fill),
+                        // 제목은 최대 두 줄(15px 글자 기준)까지만 보여주고 넘치는 부분은 잘라낸다.
+                        // 전체 제목은 툴팁으로 확인할 수 있다. 한 줄짜리 제목은 세로 가운데 정렬한다.
+                        container(
+                            container(self.title_view())
+                                .max_height(40)
+                                .clip(true)
+                        )
+                        .padding([0, 10])
+                        .height(Length::Fixed(40_f32))
+                        .align_x(alignment::Horizontal::Center)
+                        .align_y(alignment::Vertical::Center)
+                        .width(Length::Fill),
                         container(self.seek_view())
-                            .padding(5)
-                            .align_x(alignment::Horizontal::Center)
+                            .padding([0, 5])
                             .width(Length::Fill),
                         container(self.button_view())
-                            .padding(5)
                             .align_x(alignment::Horizontal::Center)
                             .width(Length::Fill),
                         container(self.volume_view())
-                            .padding(5)
-                            .align_x(alignment::Horizontal::Center)
+                            .padding([0, 5])
                             .width(Length::Fill),
-                    ),)
+                    )
+                    .spacing(10),)
                     .style(|_: &Theme| {
                         container::Style {
                             text_color: Some(Color::BLACK),
@@ -328,7 +334,7 @@ impl MainApp {
                     .padding(10),
                 )
                 .width(Length::Fill)
-                .height(Length::Fixed(230_f32))
+                .height(Length::Shrink)
                 .padding(10),
                 container(self.items_list_view())
                     .height(Length::Fill)
@@ -395,7 +401,7 @@ impl MainApp {
 
         let title_text = text(title)
             .size(15)
-            .height(Length::Fill)
+            .align_x(alignment::Horizontal::Center)
             .shaping(advanced::text::Shaping::Advanced);
 
         let full_title = container(
@@ -417,7 +423,7 @@ impl MainApp {
             ..Default::default()
         });
 
-        widget::tooltip(title_text, full_title, widget::tooltip::Position::Bottom)
+        widget::tooltip(title_text, full_title, widget::tooltip::Position::Top)
             .gap(4)
             .delay(Duration::from_millis(300))
             .into()
