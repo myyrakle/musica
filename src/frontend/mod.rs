@@ -352,7 +352,7 @@ impl MainApp {
     }
 
     pub fn subscription(&self) -> iced::Subscription<ForegroundEvent> {
-        let tick = iced::time::every(Duration::from_millis(250)).map(ForegroundEvent::Tick);
+        let tick = iced::time::every(Duration::from_secs(1)).map(ForegroundEvent::Tick);
 
         Subscription::batch(vec![tick])
     }
