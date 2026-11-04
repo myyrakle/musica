@@ -49,6 +49,14 @@ fn open_audio_output() -> anyhow::Result<MixerDeviceSink> {
     Ok(stream)
 }
 
+// 기존 Player의 볼륨을 이어받는 빈 Player를 만든다. 기존 Player는 drop되면 재생을 멈춘다.
+fn new_player_like(sink: &Player, stream: &MixerDeviceSink) -> Player {
+    let player = Player::connect_new(stream.mixer());
+    player.set_volume(sink.volume());
+
+    player
+}
+
 // Player::clear()는 오디오 스레드가 곡을 넘겨줄 때까지 타임아웃 없이 대기하므로,
 // 스트림이 죽어 있으면 백그라운드 루프 전체가 멈춘다. 대신 Player를 새로 만들어 교체한다.
 fn replace_player(
@@ -57,12 +65,20 @@ fn replace_player(
     stream: &MixerDeviceSink,
     source: Decoder<std::io::BufReader<File>>,
 ) {
-    let player = Player::connect_new(stream.mixer());
-    player.set_volume(sink.volume());
+    let player = new_player_like(sink, stream);
     player.append(source);
 
     *sink = player;
     *start_offset = Duration::ZERO;
+}
+
+fn shuffled_indices(len: usize) -> Vec<usize> {
+    use rand::seq::SliceRandom;
+
+    let mut indices = (0..len).collect::<Vec<_>>();
+    indices.shuffle(&mut rand::rng());
+
+    indices
 }
 
 fn get_current_music_source(
@@ -103,7 +119,7 @@ fn get_source_from_music(music: &Music) -> anyhow::Result<Decoder<std::io::BufRe
 pub fn background_loop(
     receiver: Receiver<BackgroundLoopEvent>,
     mut background_state: BackgroundState,
-    music_list: MusicList,
+    mut music_list: MusicList,
     initial_volume: f32,
 ) {
     thread::spawn(move || {
@@ -125,12 +141,7 @@ pub fn background_loop(
         let mut stall_detector = StallDetector::new(Instant::now());
 
         // shuffled index list
-        let mut random_indices = (0..music_list.list.len()).collect::<Vec<_>>();
-
-        {
-            use rand::seq::SliceRandom;
-            random_indices.shuffle(&mut rand::rng());
-        }
+        let mut random_indices = shuffled_indices(music_list.list.len());
 
         // 시작 시 첫 곡 자동 재생
         if music_list.is_not_empty()
@@ -189,6 +200,10 @@ pub fn background_loop(
                         }
                     }
                     BackgroundLoopEvent::Previous => {
+                        if music_list.list.is_empty() {
+                            continue;
+                        }
+
                         let mut index = background_state
                             .current_index
                             .load(std::sync::atomic::Ordering::Acquire);
@@ -256,6 +271,35 @@ pub fn background_loop(
                     BackgroundLoopEvent::VolumeChanged(volume) => {
                         sink.set_volume(volume);
                     }
+                    BackgroundLoopEvent::MusicListChanged(new_music_list) => {
+                        // 기존 인덱스는 이전 목록 기준이므로 새 목록의 처음부터 다시 재생한다.
+                        music_list = new_music_list;
+                        random_indices = shuffled_indices(music_list.list.len());
+
+                        background_state
+                            .current_index
+                            .store(0, std::sync::atomic::Ordering::Relaxed);
+                        background_state
+                            .current_music_index
+                            .store(0, std::sync::atomic::Ordering::Relaxed);
+
+                        // 이전 목록의 곡 재생을 멈춘다. 새 목록이 비어 있으면 그대로 정지 상태가 된다.
+                        sink = new_player_like(&sink, &stream);
+                        start_offset = Duration::ZERO;
+
+                        if music_list.is_not_empty()
+                            && let Ok(source) = get_current_music_source(
+                                &mut background_state,
+                                &random_indices,
+                                &music_list,
+                            )
+                        {
+                            sink.append(source);
+                            background_state
+                                .is_paused
+                                .store(false, std::sync::atomic::Ordering::Relaxed);
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -285,9 +329,7 @@ pub fn background_loop(
                         .load(std::sync::atomic::Ordering::Acquire);
 
                     // 파일을 열 수 없으면 sink가 비므로 아래에서 다음 곡으로 넘어간다.
-                    let player = Player::connect_new(stream.mixer());
-                    player.set_volume(sink.volume());
-                    sink = player;
+                    sink = new_player_like(&sink, &stream);
 
                     start_offset = Duration::ZERO;
 

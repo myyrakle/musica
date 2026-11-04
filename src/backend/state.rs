@@ -3,6 +3,8 @@ use std::sync::{
     atomic::{AtomicBool, AtomicUsize},
 };
 
+use crate::state::MusicList;
+
 pub enum BackgroundLoopEvent {
     StartUp,
     Pause,
@@ -11,6 +13,7 @@ pub enum BackgroundLoopEvent {
     Previous,
     DirectPlayMusic(usize),
     VolumeChanged(f32),
+    MusicListChanged(MusicList),
 }
 
 #[derive(Debug, Clone)]
