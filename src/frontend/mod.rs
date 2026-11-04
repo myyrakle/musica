@@ -91,6 +91,15 @@ impl MainApp {
 
         app
     }
+    /// 창 제목에도 현재 곡 제목을 표시해 작업 표시줄 등에서 전체 제목을 확인할 수 있게 한다.
+    pub fn window_title(&self) -> String {
+        if self.main_state.music_list.is_not_empty() {
+            format!("{} - musica", self.main_state.title)
+        } else {
+            "musica".into()
+        }
+    }
+
     pub fn theme(&self) -> iced::Theme {
         iced::Theme::Dracula
     }
@@ -239,15 +248,10 @@ impl MainApp {
                 container(
                     container(column!(
                         container(self.setting_button()).padding(0),
-                        container(
-                            text(self.main_state.title.as_str())
-                                .size(15)
-                                .height(Length::Fill)
-                                .shaping(advanced::text::Shaping::Advanced)
-                        )
-                        .padding(10)
-                        .align_x(alignment::Horizontal::Center)
-                        .width(Length::Fill),
+                        container(self.title_view())
+                            .padding(10)
+                            .align_x(alignment::Horizontal::Center)
+                            .width(Length::Fill),
                         container(self.button_view())
                             .padding(5)
                             .align_x(alignment::Horizontal::Center)
@@ -332,6 +336,41 @@ impl MainApp {
         });
 
         setting_button.into()
+    }
+
+    /// 현재 재생 중인 곡 제목.
+    /// 상단 영역 높이가 고정되어 있어 긴 제목은 잘리므로, 마우스를 올리면 전체 제목을 툴팁으로 보여준다.
+    fn title_view(&self) -> Element<'_, ForegroundEvent> {
+        let title = self.main_state.title.as_str();
+
+        let title_text = text(title)
+            .size(15)
+            .height(Length::Fill)
+            .shaping(advanced::text::Shaping::Advanced);
+
+        let full_title = container(
+            text(title)
+                .size(13)
+                .shaping(advanced::text::Shaping::Advanced),
+        )
+        .max_width(260)
+        .padding(8)
+        .style(|_: &Theme| container::Style {
+            text_color: Some(Color::WHITE),
+            background: Some(iced::Background::Color(Color::from_rgba8(
+                0x0, 0x0, 0x0, 0.85,
+            ))),
+            border: iced::Border {
+                radius: 6.0.into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+
+        widget::tooltip(title_text, full_title, widget::tooltip::Position::Bottom)
+            .gap(4)
+            .delay(Duration::from_millis(300))
+            .into()
     }
 
     fn items_list_view(&self) -> Element<'_, ForegroundEvent> {
