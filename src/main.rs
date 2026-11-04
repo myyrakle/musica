@@ -25,7 +25,7 @@ fn main() -> iced::Result {
     }
 
     iced::application(MainApp::default, MainApp::update, MainApp::view)
-        .title("musica")
+        .title(MainApp::window_title)
         .settings(setting)
         .window(window_setting)
         .resizable(false)
