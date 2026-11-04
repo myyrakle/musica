@@ -1,6 +1,9 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, AtomicUsize},
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicU64, AtomicUsize},
+    },
+    time::Duration,
 };
 
 use crate::state::MusicList;
@@ -14,6 +17,7 @@ pub enum BackgroundLoopEvent {
     DirectPlayMusic(usize),
     VolumeChanged(f32),
     MusicListChanged(MusicList),
+    Seek(Duration),
 }
 
 #[derive(Debug, Clone)]
@@ -22,4 +26,6 @@ pub struct BackgroundState {
     pub current_music_index: Arc<AtomicUsize>, // Random 인덱스를 거쳐서 실제 재생 대상을 가리키는 인덱스
     pub is_random_mode: Arc<AtomicBool>,
     pub is_paused: Arc<AtomicBool>,
+    pub position_millis: Arc<AtomicU64>, // 현재 곡의 재생 위치 (ms)
+    pub total_duration_millis: Arc<AtomicU64>, // 현재 곡의 전체 길이 (ms, 알 수 없으면 0)
 }

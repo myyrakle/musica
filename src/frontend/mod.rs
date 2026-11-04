@@ -23,6 +23,10 @@ pub struct MainApp {
 
     background_event_sender: Sender<BackgroundLoopEvent>,
     background_state: BackgroundState,
+
+    position_secs: f32,        // 현재 재생 위치 (초)
+    total_secs: f32,           // 현재 곡 전체 길이 (초, 알 수 없으면 0)
+    seek_preview: Option<f32>, // 재생 막대를 드래그하는 중일 때의 위치 (초)
 }
 
 #[derive(Debug, Clone)]
@@ -41,6 +45,9 @@ pub enum ForegroundEvent {
     RandomToggled(bool),
     VolumeChanged(f32),
 
+    SeekChanged(f32),
+    SeekReleased,
+
     #[allow(dead_code)]
     Tick(Instant),
 }
@@ -57,6 +64,8 @@ impl MainApp {
             current_index: Default::default(),
             is_random_mode: Arc::new(config_data.is_random.into()),
             is_paused: Arc::new(false.into()),
+            position_millis: Default::default(),
+            total_duration_millis: Default::default(),
         };
 
         let mut app = Self {
@@ -69,6 +78,9 @@ impl MainApp {
             show_setting_modal: false,
             background_state,
             background_event_sender: sender,
+            position_secs: 0.0,
+            total_secs: 0.0,
+            seek_preview: None,
         };
 
         app.update_music_list_from_config();
@@ -182,6 +194,22 @@ impl MainApp {
                     .load(std::sync::atomic::Ordering::Acquire);
                 self.main_state.on_play = !is_paused;
 
+                self.total_secs =
+                    self.background_state
+                        .total_duration_millis
+                        .load(std::sync::atomic::Ordering::Acquire) as f32
+                        / 1000.0;
+                let position_secs =
+                    self.background_state
+                        .position_millis
+                        .load(std::sync::atomic::Ordering::Acquire) as f32
+                        / 1000.0;
+                self.position_secs = if self.total_secs > 0.0 {
+                    position_secs.min(self.total_secs)
+                } else {
+                    position_secs
+                };
+
                 let current_music_index = self
                     .background_state
                     .current_music_index
@@ -231,6 +259,24 @@ impl MainApp {
                     println!("Failed to send event: {:?}", error);
                 }
             }
+            ForegroundEvent::SeekChanged(position) => {
+                // 전체 길이를 알 수 없는 곡은 탐색하지 않는다
+                if self.total_secs > 0.0 {
+                    self.seek_preview = Some(position.clamp(0.0, self.total_secs));
+                }
+            }
+            ForegroundEvent::SeekReleased => {
+                if let Some(position) = self.seek_preview.take() {
+                    self.position_secs = position;
+
+                    if let Err(error) = self
+                        .background_event_sender
+                        .send(BackgroundLoopEvent::Seek(Duration::from_secs_f32(position)))
+                    {
+                        println!("Failed to send event: {:?}", error);
+                    }
+                }
+            }
             ForegroundEvent::DirectPlayMusic(index) => {
                 if let Err(error) = self
                     .background_event_sender
@@ -250,6 +296,10 @@ impl MainApp {
                         container(self.setting_button()).padding(0),
                         container(self.title_view())
                             .padding(10)
+                            .align_x(alignment::Horizontal::Center)
+                            .width(Length::Fill),
+                        container(self.seek_view())
+                            .padding(5)
                             .align_x(alignment::Horizontal::Center)
                             .width(Length::Fill),
                         container(self.button_view())
@@ -278,7 +328,7 @@ impl MainApp {
                     .padding(10),
                 )
                 .width(Length::Fill)
-                .height(Length::Fixed(195_f32))
+                .height(Length::Fixed(230_f32))
                 .padding(10),
                 container(self.items_list_view())
                     .height(Length::Fill)
@@ -302,7 +352,7 @@ impl MainApp {
     }
 
     pub fn subscription(&self) -> iced::Subscription<ForegroundEvent> {
-        let tick = iced::time::every(Duration::from_millis(500)).map(ForegroundEvent::Tick);
+        let tick = iced::time::every(Duration::from_millis(250)).map(ForegroundEvent::Tick);
 
         Subscription::batch(vec![tick])
     }
@@ -445,6 +495,37 @@ impl MainApp {
             .into()
     }
 
+    fn seek_view(&self) -> Element<'_, ForegroundEvent> {
+        // 드래그 중에는 드래그 위치를, 아니면 실제 재생 위치를 표시
+        let position = self.seek_preview.unwrap_or(self.position_secs);
+        let max = if self.total_secs > 0.0 {
+            self.total_secs
+        } else {
+            1.0
+        };
+
+        let time_text = if self.total_secs > 0.0 {
+            format!(
+                "{} / {}",
+                format_time(position),
+                format_time(self.total_secs)
+            )
+        } else {
+            format!("{} / --:--", format_time(position))
+        };
+
+        widget::row![
+            widget::slider(0.0..=max, position.min(max), ForegroundEvent::SeekChanged)
+                .on_release(ForegroundEvent::SeekReleased)
+                .step(0.1_f32),
+            text(time_text).size(12),
+        ]
+        .spacing(8)
+        .align_y(iced::Alignment::Center)
+        .width(Length::Fill)
+        .into()
+    }
+
     fn volume_view(&self) -> Element<'_, ForegroundEvent> {
         let volume_percent = (self.config_data.volume * 100.0).round() as u8;
 
@@ -455,7 +536,7 @@ impl MainApp {
                 self.config_data.volume,
                 ForegroundEvent::VolumeChanged,
             )
-            .step(0.01),
+            .step(0.01_f32),
             text(format!("{volume_percent}%"))
                 .size(12)
                 .width(Length::Fixed(36.0)),
@@ -556,5 +637,30 @@ impl MainApp {
         .style(container::rounded_box);
 
         content.into()
+    }
+}
+
+/// 초 단위 시간을 mm:ss (1시간 이상이면 h:mm:ss) 형식으로 변환
+fn format_time(secs: f32) -> String {
+    let total = secs.max(0.0) as u64;
+    let (hours, minutes, seconds) = (total / 3600, (total % 3600) / 60, total % 60);
+
+    if hours > 0 {
+        format!("{hours}:{minutes:02}:{seconds:02}")
+    } else {
+        format!("{minutes:02}:{seconds:02}")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_time;
+
+    #[test]
+    fn format_time_works() {
+        assert_eq!(format_time(0.0), "00:00");
+        assert_eq!(format_time(65.9), "01:05");
+        assert_eq!(format_time(3725.0), "1:02:05");
+        assert_eq!(format_time(-3.0), "00:00");
     }
 }
