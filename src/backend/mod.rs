@@ -16,7 +16,7 @@ use crate::state::{Music, MusicList};
 const STALL_TIMEOUT: Duration = Duration::from_secs(3);
 const AUDIO_OUTPUT_RETRY_INTERVAL: Duration = Duration::from_secs(1);
 
-// 오디오 스트림이 죽어도 cpal은 복구하지 않고, 경우에 따라 오류 콜백조차 호출하지 않는다.
+// 언더런은 cpal이 자체 복구하지만, 오류 콜백 없이 스트림이 멈추는 경우가 있다.
 // (예: PipeWire 스트림이 끊긴 경우) 그래서 재생 위치의 진행 여부로 직접 감지한다.
 struct StallDetector {
     last_position: Duration,
